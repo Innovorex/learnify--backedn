@@ -6,6 +6,7 @@ from enum import Enum
 class RoleEnum(str, Enum):
     teacher = "teacher"
     admin = "admin"
+    student = "student"
 
 # ---------- INPUT SCHEMAS ----------
 
@@ -15,6 +16,10 @@ class SignupIn(BaseModel):
     password: str = Field(min_length=6)
     confirm_password: str = Field(min_length=6)
     role: RoleEnum = RoleEnum.teacher   # default to teacher
+
+    # Student-specific fields (required if role is student)
+    class_name: str | None = None
+    section: str | None = None
 
 
 class LoginIn(BaseModel):
@@ -33,6 +38,10 @@ class UserOut(BaseModel):
     name: str
     email: EmailStr
     role: RoleEnum   # auto converts Enum -> string for API response
+
+    # Student-specific fields
+    class_name: str | None = None
+    section: str | None = None
 
     class Config:
         from_attributes = True  # SQLAlchemy -> Pydantic conversion

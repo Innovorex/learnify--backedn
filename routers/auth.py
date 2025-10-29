@@ -17,11 +17,22 @@ def signup(payload: SignupIn, db: Session = Depends(get_db)):
     if exists:
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    # Validate student-specific fields
+    if payload.role == "student":
+        if not payload.class_name or not payload.section:
+            raise HTTPException(
+                status_code=400,
+                detail="Class name and section are required for student registration"
+            )
+
     user = User(
         name=payload.name.strip(),
         email=payload.email.lower(),
         password_hash=hash_password(payload.password),
         role=Role(payload.role),
+        # Student-specific fields
+        class_name=payload.class_name if payload.role == "student" else None,
+        section=payload.section if payload.role == "student" else None,
     )
     db.add(user)
     db.commit()

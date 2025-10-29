@@ -8,6 +8,7 @@ import enum
 class Role(str, enum.Enum):
     teacher = "teacher"
     admin = "admin"
+    student = "student"
 
 # ---------- USER TABLE ----------
 class User(Base):
@@ -18,6 +19,11 @@ class User(Base):
     email = Column(String(120), unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(Enum(Role), nullable=False, default=Role.teacher)
+
+    # Student-specific fields (nullable, only for students)
+    class_name = Column(String(10), nullable=True)
+    section = Column(String(5), nullable=True)
+
     created_at = Column(DateTime, server_default=func.now())
 
     # relationship (1-to-1 with TeacherProfile)

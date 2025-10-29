@@ -1,118 +1,126 @@
 """
-Service for managing syllabus cache and retrieval
+Enhanced CBSE Syllabus Service for K-12 Assessment
+==================================================
+Retrieves syllabus content from database for AI question generation.
+Simplified version focused on content retrieval (no PDF fetching).
 """
-import json
-from datetime import datetime, timedelta
+
+from typing import Optional, Dict
 from sqlalchemy.orm import Session
-from models import SyllabusCache
-from services.syllabus_agent import syllabus_agent
+from models_syllabus import SyllabusMaster, SyllabusContent, SyllabusTopics
 
 
 class SyllabusService:
-    """Manages syllabus caching and retrieval"""
+    """
+    Service for retrieving syllabus content for question generation
+    """
 
-    @staticmethod
-    def get_difficulty_level(experience_years: int) -> str:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_syllabus_content(self, class_name: str, subject: str, chapter: str) -> Optional[str]:
         """
-        Determine question difficulty based on teacher experience
-
+        Get syllabus content for a specific chapter.
+        This is used by the AI question generator.
+        
         Args:
-            experience_years: Years of teaching experience
-
+            class_name: Class (e.g., '9', '10')
+            subject: Subject name (e.g., 'Mathematics')
+            chapter: Chapter name (e.g., 'Real Numbers')
+            
         Returns:
-            'easy', 'medium', or 'hard'
+            Full syllabus content as string, or None if not found
         """
-        if experience_years <= 2:
-            return 'easy'
-        elif experience_years <= 7:
-            return 'medium'
-        else:
-            return 'hard'
+        # First try syllabus_content table (most specific)
+        content = self.db.query(SyllabusContent).filter(
+            SyllabusContent.class_name == class_name,
+            SyllabusContent.subject.ilike(subject),
+            SyllabusContent.chapter.ilike(chapter)
+        ).first()
 
-    @staticmethod
-    async def get_syllabus(
-        db: Session,
-        state: str,
-        board: str,
-        grade: str,
-        subject: str,
-        force_refresh: bool = False
-    ) -> dict:
+        if content:
+            print(f"✅ Found specific content for {chapter}")
+            return content.full_content
+
+        # Fallback to syllabus_master (broader content)
+        syllabus = self.db.query(SyllabusMaster).filter(
+            SyllabusMaster.class_name == class_name,
+            SyllabusMaster.subject.ilike(subject),
+            SyllabusMaster.is_active == True
+        ).first()
+
+        if syllabus and syllabus.content_extracted:
+            print(f"✅ Using master syllabus content for {subject}")
+            # Try to find chapter-specific section in the full content
+            content_text = syllabus.content_extracted
+            
+            # Simple heuristic: look for chapter name in content
+            if chapter.lower() in content_text.lower():
+                # Extract relevant section (simplified)
+                return content_text
+            
+            return content_text
+
+        print(f"⚠️ No syllabus content found for Class {class_name} - {subject} - {chapter}")
+        return None
+
+    def get_topics_for_subject(self, class_name: str, subject: str) -> list:
         """
-        Get syllabus from cache or fetch using AI agent
-
-        Args:
-            db: Database session
-            state: State name
-            board: Board name
-            grade: Grade/Class
-            subject: Subject name
-            force_refresh: Force re-fetch even if cached
-
+        Get all available chapters/topics for a subject
+        
         Returns:
-            Syllabus data dictionary
+            List of chapter names
         """
-        # Normalize inputs
-        state = state.strip()
-        board = board.strip()
-        grade = str(grade).strip()
-        subject = subject.strip()
+        syllabus = self.db.query(SyllabusMaster).filter(
+            SyllabusMaster.class_name == class_name,
+            SyllabusMaster.subject.ilike(subject),
+            SyllabusMaster.is_active == True
+        ).first()
 
-        # Check cache first (unless force refresh)
-        if not force_refresh:
-            cached = db.query(SyllabusCache).filter(
-                SyllabusCache.state == state,
-                SyllabusCache.board == board,
-                SyllabusCache.grade == grade,
-                SyllabusCache.subject == subject
-            ).first()
+        if not syllabus:
+            return []
 
-            # If cached and less than 30 days old, use it
-            if cached:
-                age = datetime.utcnow() - cached.fetched_at
-                if age < timedelta(days=30):
-                    print(f"[CACHE HIT] Using cached syllabus for {state}/{board}/{grade}/{subject}")
-                    return json.loads(cached.syllabus_data)
+        topics = self.db.query(SyllabusTopics).filter(
+            SyllabusTopics.syllabus_id == syllabus.id,
+            SyllabusTopics.is_chapter == True
+        ).order_by(SyllabusTopics.sequence_order).all()
 
-        # Cache miss or expired - fetch using AI agent
-        print(f"[CACHE MISS] Fetching syllabus using AI agent...")
-        syllabus_data = await syllabus_agent.fetch_syllabus(state, board, grade, subject)
+        return [topic.chapter_name for topic in topics]
 
-        # Save to cache
-        try:
-            cached = db.query(SyllabusCache).filter(
-                SyllabusCache.state == state,
-                SyllabusCache.board == board,
-                SyllabusCache.grade == grade,
-                SyllabusCache.subject == subject
-            ).first()
+    def get_chapter_details(self, class_name: str, subject: str, chapter: str) -> Optional[Dict]:
+        """
+        Get detailed information about a chapter
+        """
+        syllabus = self.db.query(SyllabusMaster).filter(
+            SyllabusMaster.class_name == class_name,
+            SyllabusMaster.subject.ilike(subject),
+            SyllabusMaster.is_active == True
+        ).first()
 
-            syllabus_json = json.dumps(syllabus_data, ensure_ascii=False)
+        if not syllabus:
+            return None
 
-            if cached:
-                # Update existing
-                cached.syllabus_data = syllabus_json
-                cached.updated_at = datetime.utcnow()
-            else:
-                # Create new
-                new_cache = SyllabusCache(
-                    state=state,
-                    board=board,
-                    grade=grade,
-                    subject=subject,
-                    syllabus_data=syllabus_json
-                )
-                db.add(new_cache)
+        topic = self.db.query(SyllabusTopics).filter(
+            SyllabusTopics.syllabus_id == syllabus.id,
+            SyllabusTopics.chapter_name.ilike(chapter),
+            SyllabusTopics.is_chapter == True
+        ).first()
 
-            db.commit()
-            print(f"[CACHE SAVED] Syllabus cached for {state}/{board}/{grade}/{subject}")
+        if not topic:
+            return None
 
-        except Exception as e:
-            print(f"[CACHE ERROR] Failed to save to cache: {e}")
-            db.rollback()
-
-        return syllabus_data
+        return {
+            "chapter_name": topic.chapter_name,
+            "unit_name": topic.unit_name,
+            "chapter_number": topic.chapter_number,
+            "subtopics": topic.subtopics or [],
+            "learning_outcomes": topic.learning_outcomes or [],
+            "key_concepts": topic.key_concepts or [],
+            "weightage": topic.weightage,
+            "difficulty_level": topic.difficulty_level
+        }
 
 
-# Global service instance
-syllabus_service = SyllabusService()
+def get_syllabus_service(db: Session) -> SyllabusService:
+    """Factory function to create syllabus service"""
+    return SyllabusService(db)

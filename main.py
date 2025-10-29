@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
-from routers import auth, teacher, modules, assessments, submissions, outcomes, performance, tracking, courses, admin, career_progression, ai_tutor
+from routers import auth, teacher, student, modules, assessments, submissions, outcomes, performance, tracking, courses, admin, career_progression, ai_tutor
 from security import get_current_user, require_role
 from models import User
 from models_cpd import CPDCourse, TeacherCourseRecommendation, TeacherCourseProgress
@@ -32,6 +32,8 @@ origins = [
     "https://104.251.271.92",
     "https://104.251.217.92",
     "https://104.251.217.119",
+    "https://learnifyteach.innovorex.co.in",  # Production HTTPS frontend
+    "http://learnifyteach.innovorex.co.in",   # HTTP redirect
 ]
 
 app.add_middleware(
@@ -45,6 +47,7 @@ app.add_middleware(
 # ✅ Include routers AFTER CORS setup
 app.include_router(auth.router)
 app.include_router(teacher.router)
+app.include_router(student.router)  # NEW: Student K-12 Assessments
 app.include_router(modules.router)
 app.include_router(assessments.router)
 app.include_router(submissions.router)
