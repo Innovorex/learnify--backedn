@@ -16,11 +16,15 @@ router = APIRouter(prefix="/api/ai-tutor", tags=["AI Tutor"])
 
 # Request/Response Models
 class StartSessionRequest(BaseModel):
-    topic_name: str = Field(..., description="Topic to learn about")
+    topic_name: Optional[str] = Field(None, description="Topic to learn about (optional if using material)")
     subject: str = Field(..., description="Subject name")
     grade: str = Field(..., description="Grade level")
     state: str = Field(default="Telangana", description="State for syllabus")
     board: str = Field(default="State Board", description="Board for syllabus")
+
+    # NEW: Material selection
+    use_uploaded_material: bool = Field(default=False, description="Whether to use uploaded material")
+    material_id: Optional[int] = Field(None, description="ID of uploaded material to use")
 
     model_config = {
         "protected_namespaces": ()
@@ -197,9 +201,39 @@ async def start_ai_tutor_session(
     try:
         is_bed_qualified = get_teacher_qualification(teacher_id, db)
 
+        # Get material info if material_id provided
+        material_filename = None
+        material_title = None
+        if request.use_uploaded_material and request.material_id:
+            material_result = db.execute(
+                text("SELECT original_filename, title FROM teaching_materials WHERE id = :material_id AND teacher_id = :teacher_id"),
+                {"material_id": request.material_id, "teacher_id": teacher_id}
+            ).fetchone()
+
+            if not material_result:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Material not found or does not belong to you"
+                )
+
+            material_filename = material_result[0]
+            material_title = material_result[1]
+
+        # Use material title if topic_name is empty when using materials
+        topic_name = request.topic_name
+        if request.use_uploaded_material and (not topic_name or not topic_name.strip()):
+            topic_name = material_title or "Material Content"
+
+        # Validate topic_name
+        if not topic_name or not topic_name.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Topic name is required when not using uploaded material"
+            )
+
         session_id = create_session_db(
             teacher_id=teacher_id,
-            topic_name=request.topic_name,
+            topic_name=topic_name,
             subject=request.subject,
             grade=request.grade,
             state=request.state,
@@ -211,12 +245,14 @@ async def start_ai_tutor_session(
         result = await ai_tutor_orchestrator.start_session(
             session_id=session_id,
             teacher_id=teacher_id,
-            topic_name=request.topic_name,
+            topic_name=topic_name,  # Use the validated topic_name
             subject=request.subject,
             grade=request.grade,
             state=request.state,
             board=request.board,
-            is_bed_qualified=is_bed_qualified
+            is_bed_qualified=is_bed_qualified,
+            material_id=request.material_id if request.use_uploaded_material else None,
+            material_filename=material_filename
         )
 
         save_message_db(

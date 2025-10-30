@@ -29,6 +29,9 @@ class User(Base):
     # relationship (1-to-1 with TeacherProfile)
     profile = relationship("TeacherProfile", back_populates="user", uselist=False)
 
+    # relationship (1-to-many with TeachingMaterial)
+    teaching_materials = relationship("TeachingMaterial", back_populates="teacher")
+
 # ---------- TEACHER PROFILE TABLE ----------
 class TeacherProfile(Base):
     __tablename__ = "teacher_profiles"
