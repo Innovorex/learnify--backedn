@@ -10,6 +10,7 @@ from sqlalchemy import text
 from database import get_db
 from security import get_current_user
 from services.ai_tutor_orchestrator import ai_tutor_orchestrator
+from services.model_config import GARUDA_API_KEY, OPENROUTER_API_KEY
 
 router = APIRouter(prefix="/api/ai-tutor", tags=["AI Tutor"])
 
@@ -77,12 +78,23 @@ def get_teacher_qualification(user_id: int, db: Session) -> bool:
     """Check if teacher has B.Ed/M.Ed qualification"""
     try:
         result = db.execute(
-            text("SELECT has_bed, has_med FROM teacher_profiles WHERE user_id = :user_id"),
+            text("SELECT has_bed, has_med, education FROM teacher_profiles WHERE user_id = :user_id"),
             {"user_id": user_id}
         ).fetchone()
 
         if result:
-            return result[0] or result[1]
+            # Check boolean flags first
+            if result[0] or result[1]:
+                return True
+
+            # Also check education field for B.Ed/M.Ed mentions
+            education = result[2] or ""
+            education_lower = education.lower()
+            if "b.ed" in education_lower or "bed" in education_lower or "b ed" in education_lower:
+                return True
+            if "m.ed" in education_lower or "med" in education_lower or "m ed" in education_lower:
+                return True
+
         return False
 
     except Exception as e:
@@ -533,4 +545,53 @@ async def close_session(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to close session"
+        )
+
+
+@router.get("/health")
+async def check_ai_services():
+    """
+    Check status of Garuda AI and OpenRouter services
+    Returns which AI services are available and configured
+    """
+    try:
+        garuda_configured = bool(GARUDA_API_KEY)
+        openrouter_configured = bool(OPENROUTER_API_KEY)
+
+        # Test Garuda AI connection if configured
+        garuda_status = "not_configured"
+        if garuda_configured:
+            try:
+                if ai_tutor_orchestrator.garuda_service:
+                    is_reachable = ai_tutor_orchestrator.garuda_service.test_connection()
+                    garuda_status = "reachable" if is_reachable else "unreachable"
+                else:
+                    garuda_status = "initialization_failed"
+            except Exception as e:
+                print(f"[HEALTH CHECK] Garuda test failed: {e}")
+                garuda_status = "error"
+
+        return {
+            "status": "ok",
+            "services": {
+                "garuda_ai": {
+                    "configured": garuda_configured,
+                    "status": garuda_status,
+                    "priority": "primary"
+                },
+                "openrouter": {
+                    "configured": openrouter_configured,
+                    "status": "configured" if openrouter_configured else "not_configured",
+                    "priority": "fallback"
+                }
+            },
+            "active_sessions": len(ai_tutor_orchestrator.active_sessions),
+            "garuda_conversations": len(ai_tutor_orchestrator.garuda_conversations)
+        }
+
+    except Exception as e:
+        print(f"[HEALTH CHECK ERROR] {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Health check failed: {str(e)}"
         )

@@ -1,19 +1,56 @@
 import requests
+import logging
 from datetime import datetime
 from typing import Dict, List, Optional
-from services.model_config import AI_TUTOR_MODEL, OPENROUTER_API_KEY, OPENROUTER_BASE_URL
+from services.model_config import (
+    GARUDA_API_KEY,
+    GARUDA_BASE_URL,
+    GARUDA_MODEL,
+    GARUDA_TIMEOUT,
+    OPENROUTER_API_KEY,
+    OPENROUTER_BASE_URL,
+    AI_TUTOR_FALLBACK_MODEL,
+    OPENROUTER_TIMEOUT
+)
+from services.garuda_ai_service import GarudaAIService
 from services.rag_retrieval_service_local import rag_retrieval_service_local as rag_retrieval_service
 from services.vector_store_service import get_vector_store
+from services.curriculum_data import CurriculumDataService
+
+logger = logging.getLogger(__name__)
 
 class AITutorOrchestrator:
     def __init__(self):
-        # OpenRouter API configuration
-        self.api_key = OPENROUTER_API_KEY
-        self.base_url = OPENROUTER_BASE_URL
-        self.model = AI_TUTOR_MODEL
+        # Primary: Garuda AI Service
+        self.garuda_service = None
+        if GARUDA_API_KEY:
+            try:
+                self.garuda_service = GarudaAIService(
+                    api_key=GARUDA_API_KEY,
+                    base_url=GARUDA_BASE_URL,
+                    model=GARUDA_MODEL,
+                    timeout=GARUDA_TIMEOUT
+                )
+                print(f"[AI TUTOR] Garuda AI initialized successfully")
+            except Exception as e:
+                print(f"[AI TUTOR] Failed to initialize Garuda AI: {e}")
+        else:
+            print(f"[AI TUTOR] Garuda AI not configured - will use OpenRouter only")
+
+        # Fallback: OpenRouter API configuration
+        self.openrouter_api_key = OPENROUTER_API_KEY
+        self.openrouter_base_url = OPENROUTER_BASE_URL
+        self.openrouter_model = AI_TUTOR_FALLBACK_MODEL
+        self.openrouter_timeout = OPENROUTER_TIMEOUT
+
+        # Curriculum service for real syllabus content
+        self.curriculum_service = CurriculumDataService()
 
         # Store active sessions in memory
         self.active_sessions = {}
+
+        # Track Garuda conversation IDs for session continuity
+        self.garuda_conversations = {}
 
     async def start_session(
         self,
@@ -35,11 +72,55 @@ class AITutorOrchestrator:
         print(f"[AI TUTOR] B.Ed Qualified: {is_bed_qualified}")
         print(f"[AI TUTOR] Material ID: {material_id}")
 
-        # Step 1: Fetch real syllabus (placeholder for now)
-        syllabus_content = f"{subject} Grade {grade} - {topic_name} (from {state} {board})"
-        syllabus_fetched = True
+        # Step 1: Fetch REAL syllabus content from curriculum
+        syllabus_content = ""
+        syllabus_fetched = False
 
-        # Step 2: Retrieve pedagogy content from IGNOU (always)
+        try:
+            print(f"[AI TUTOR] Fetching curriculum data for {board} {grade} {subject}...")
+            curriculum_data = self.curriculum_service.get_curriculum_data(
+                board=board,
+                subject=subject,
+                grade=grade
+            )
+
+            if curriculum_data and "units" in curriculum_data:
+                # Find the topic in the curriculum
+                topic_lower = topic_name.lower()
+                for unit_name, unit_data in curriculum_data["units"].items():
+                    if "topics" in unit_data:
+                        for curriculum_topic in unit_data["topics"]:
+                            if topic_lower in curriculum_topic.lower() or curriculum_topic.lower() in topic_lower:
+                                # Found matching topic!
+                                syllabus_content = (
+                                    f"CURRICULUM: {board} Grade {grade} {subject}\n"
+                                    f"Unit: {unit_name} (Weightage: {unit_data.get('weightage', 'N/A')})\n"
+                                    f"Topic: {curriculum_topic}\n"
+                                    f"Related Topics in Unit: {', '.join(unit_data['topics'])}\n"
+                                )
+                                syllabus_fetched = True
+                                print(f"[AI TUTOR] Found topic '{curriculum_topic}' in {unit_name}")
+                                break
+                    if syllabus_fetched:
+                        break
+
+                # If not found in specific topic, provide general unit info
+                if not syllabus_fetched and curriculum_data["units"]:
+                    first_unit = list(curriculum_data["units"].keys())[0]
+                    syllabus_content = (
+                        f"CURRICULUM: {board} Grade {grade} {subject}\n"
+                        f"Available Units: {', '.join(curriculum_data['units'].keys())}\n"
+                        f"Your topic '{topic_name}' relates to these curriculum areas.\n"
+                    )
+                    syllabus_fetched = True
+                    print(f"[AI TUTOR] Provided general curriculum context")
+
+        except Exception as e:
+            print(f"[AI TUTOR] Failed to fetch curriculum: {e}")
+            syllabus_content = f"{subject} Grade {grade} - {topic_name}"
+            syllabus_fetched = False
+
+        # Step 2: Retrieve pedagogy content from IGNOU (reduced for natural flow)
         pedagogy_chunks = []
         print(f"[AI TUTOR] Retrieving pedagogy content...")
         rag_result = rag_retrieval_service.retrieve_for_ai_tutor(
@@ -47,7 +128,7 @@ class AITutorOrchestrator:
             subject=subject,
             grade=grade,
             is_bed_qualified=is_bed_qualified,
-            top_k=5
+            top_k=2  # Reduced from 5 to 2 for less pedagogy weight
         )
         pedagogy_chunks = rag_result["results"]
 
@@ -75,8 +156,8 @@ class AITutorOrchestrator:
         )
 
         # Step 5: Generate AI response
-        print(f"[AI TUTOR] Generating response with {self.model}...")
-        response = self._generate_response(context)
+        print(f"[AI TUTOR] Generating response...")
+        response, model_used = self._generate_response(context, session_id)
 
         # Step 6: Store session in memory
         self.active_sessions[session_id] = {
@@ -107,7 +188,7 @@ class AITutorOrchestrator:
                 for chunk in pedagogy_chunks
             ],
             "material_sources": material_source if material_source else [],
-            "model_used": self.model,
+            "model_used": model_used,
             "created_at": datetime.now().isoformat()
         }
 
@@ -123,13 +204,13 @@ class AITutorOrchestrator:
 
         print(f"[AI TUTOR] Chat in session {session_id}")
 
-        # Retrieve additional pedagogy if needed
+        # Retrieve additional pedagogy if needed (reduced for natural flow)
         rag_result = rag_retrieval_service.retrieve_for_ai_tutor(
             teacher_question=user_message,
             subject=subject,
             grade=grade,
             is_bed_qualified=is_bed_qualified,
-            top_k=3
+            top_k=2  # Reduced from 3 to 2 for less pedagogy weight
         )
         pedagogy_chunks = rag_result["results"]
 
@@ -140,24 +221,34 @@ class AITutorOrchestrator:
         # Add user message
         conversation_history.append({"role": "user", "content": user_message})
 
-        # Build context
+        # Build context for follow-up
         context_parts = [f"Previous conversation:\n"]
         for msg in conversation_history[-4:]:  # Last 4 messages for context
             context_parts.append(f"{msg['role']}: {msg['content'][:200]}...\n")
 
-        # Add new pedagogy
-        if pedagogy_chunks:
-            context_parts.append("\nAdditional Teaching Guidance:\n")
-            for chunk in pedagogy_chunks:
-                context_parts.append(f"- {chunk['content'][:300]}...\n")
+        context_parts.append(f"\nTeacher's new question: {user_message}\n\n")
 
-        context_parts.append(f"\nTeacher's new question: {user_message}\n")
-        context_parts.append("Provide a helpful, contextual response.")
+        # Add minimal pedagogy only if not B.Ed qualified
+        if pedagogy_chunks and not is_bed_qualified:
+            context_parts.append("Brief teaching insights (keep minimal):\n")
+            for chunk in pedagogy_chunks[:2]:
+                context_parts.append(f"- {chunk['content'][:150]}...\n")
+            context_parts.append("\n")
+
+        # Natural flow instructions
+        context_parts.append(
+            "Provide a natural, conversational response:\n"
+            "- Focus on answering their specific question clearly\n"
+            "- If it's about the concept: explain it simply with examples\n"
+            "- If it's about teaching: give practical, brief tips\n"
+            "- Keep it flowing and natural (not broken into parts)\n"
+            "- Be supportive and encouraging\n"
+        )
 
         context = "".join(context_parts)
 
         # Generate response
-        response = self._generate_response(context)
+        response, model_used = self._generate_response(context, session_id)
 
         # Update conversation history
         conversation_history.append({"role": "assistant", "content": response})
@@ -176,7 +267,7 @@ class AITutorOrchestrator:
                 }
                 for chunk in pedagogy_chunks
             ],
-            "model_used": self.model,
+            "model_used": model_used,
             "timestamp": datetime.now().isoformat()
         }
 
@@ -195,9 +286,16 @@ class AITutorOrchestrator:
 
         context_parts = [
             f"You are an AI Teaching Assistant helping a Grade {grade} {subject} teacher.\n",
-            f"Topic: {topic_name}\n",
-            f"Syllabus: {syllabus_content}\n\n"
+            f"Topic: {topic_name}\n\n"
         ]
+
+        # Add curriculum content prominently
+        if syllabus_content and len(syllabus_content) > 20:
+            context_parts.append(
+                f"📚 OFFICIAL CURRICULUM INFORMATION:\n"
+                f"{syllabus_content}\n"
+                f"Use this curriculum context to ensure your explanation aligns with the syllabus.\n\n"
+            )
 
         # If uploaded material is provided, use it as primary source
         if material_chunks:
@@ -259,38 +357,118 @@ class AITutorOrchestrator:
             # Standard behavior without uploaded material
             if is_bed_qualified:
                 context_parts.append(
-                    "This teacher has B.Ed/M.Ed qualification. Provide an in-depth subject explanation ONLY.\n"
-                    "Do NOT include basic teaching tips - they already know pedagogy.\n\n"
+                    f"You are helping a B.Ed/M.Ed qualified teacher understand '{topic_name}' for Grade {grade} {subject}.\n\n"
+                    "Since they already have pedagogical training, focus ONLY on the subject content:\n"
+                    "- Provide an in-depth, comprehensive explanation of the concept\n"
+                    "- Include advanced examples and edge cases\n"
+                    "- Highlight common student misconceptions\n"
+                    "- Provide challenging practice problems\n"
+                    "- Do NOT include basic teaching tips - they already know pedagogy\n\n"
+                    f"Explain {topic_name} thoroughly and academically.\n"
                 )
             else:
+                # NON-B.ED TEACHER: Natural flow approach
                 context_parts.append(
-                    "This teacher does NOT have B.Ed/M.Ed. Provide:\n"
-                    "1. SUBJECT EXPLANATION: What is this topic?\n"
-                    "2. TEACHING GUIDANCE: HOW to teach it (use the pedagogy below)\n\n"
+                    f"You are helping a teacher WITHOUT B.Ed qualification understand and teach '{topic_name}' to Grade {grade} {subject} students.\n\n"
+
+                    "IMPORTANT: Provide a NATURAL, FLOWING response (not broken into parts).\n\n"
+
+                    "YOUR RESPONSE STRUCTURE (seamlessly blended, not separated):\n"
+                    "1. Start by explaining the CONCEPT in a clear, simple, beginner-friendly way (60% of response)\n"
+                    "   - What is this concept? Use simple language\n"
+                    "   - Why is it important for Grade {grade} students?\n"
+                    "   - Key terms explained with analogies\n"
+                    "   - Visual descriptions (how to draw/show it)\n"
+                    "   - Real-world connections that make it relatable\n\n"
+
+                    "2. Then naturally transition to EXAMPLES and practice (30% of response)\n"
+                    "   - 3-4 solved examples with step-by-step explanations\n"
+                    "   - 3 practice problems (beginner to intermediate)\n"
+                    "   - Common mistakes students make\n"
+                    "   - Real-world applications\n\n"
+
+                    "3. Finally, end with brief TEACHING TIPS (10% of response, keep it short and practical)\n"
+                    "   - How to introduce this topic (one quick suggestion)\n"
+                    "   - One interactive activity idea\n"
+                    "   - Common mistakes to watch for when teaching\n\n"
                 )
 
-            if pedagogy_chunks:
-                context_parts.append("IGNOU B.Ed Pedagogy References:\n")
-                for i, chunk in enumerate(pedagogy_chunks, 1):
-                    context_parts.append(f"{i}. {chunk['content'][:500]}...\n\n")
+            # Add minimal, practical pedagogy for non-B.Ed (only 2 short chunks)
+            if pedagogy_chunks and not is_bed_qualified:
+                context_parts.append("Practical Teaching Insights (keep brief in your response):\n")
+                for i, chunk in enumerate(pedagogy_chunks[:2], 1):
+                    # Extract only 150 chars for brevity
+                    practical_tip = chunk['content'][:150].strip()
+                    context_parts.append(f"- {practical_tip}\n")
+                context_parts.append("\n")
 
             context_parts.append(
-                f"Provide a comprehensive response about teaching {topic_name} to Grade {grade} students."
+                f"Write your response as ONE continuous, natural explanation - NOT divided into 'Part 1', 'Part 2', etc.\n"
+                f"Remember: 60% concept clarity + 30% examples + 10% teaching tips.\n"
+                f"Be conversational, encouraging, and supportive. The teacher is learning this to teach their students.\n"
             )
 
         return "".join(context_parts)
 
-    def _generate_response(self, context: str) -> str:
-        """Generate response using OpenRouter API"""
+    def _generate_response(self, context: str, session_id: Optional[int] = None) -> tuple:
+        """
+        Generate response using Garuda AI (primary) with OpenRouter fallback
 
+        Returns:
+            tuple: (response_text, model_used)
+        """
+
+        # Step 1: Try Garuda AI first (if configured)
+        if self.garuda_service:
+            try:
+                print(f"[AI TUTOR] Attempting Garuda AI (Primary)...")
+
+                # Get conversation ID for session continuity
+                conversation_id = self.garuda_conversations.get(session_id)
+
+                result = self.garuda_service.generate_response(
+                    message=context,
+                    conversation_id=conversation_id
+                )
+
+                # Store conversation_id for future messages in this session
+                if session_id and result.get("conversation_id"):
+                    self.garuda_conversations[session_id] = result["conversation_id"]
+                    print(f"[AI TUTOR] Stored Garuda conversation_id for session {session_id}")
+
+                response_text = result["response"]
+                model_used = f"Garuda AI ({result.get('model', GARUDA_MODEL)})"
+
+                print(f"[AI TUTOR] ✓ Garuda AI success - Generated {len(response_text)} characters")
+                logger.info(f"[AI TUTOR] Garuda AI - Session: {session_id}, Tokens: {result.get('usage', {})}")
+
+                return response_text, model_used
+
+            except Exception as e:
+                print(f"[AI TUTOR] ✗ Garuda AI failed: {str(e)}")
+                logger.error(f"[AI TUTOR] Garuda AI error: {str(e)}")
+                print(f"[AI TUTOR] Falling back to OpenRouter...")
+
+        # Step 2: Fallback to OpenRouter
+        return self._generate_response_openrouter(context)
+
+    def _generate_response_openrouter(self, context: str) -> tuple:
+        """
+        Generate response using OpenRouter API (fallback)
+
+        Returns:
+            tuple: (response_text, model_used)
+        """
         try:
+            print(f"[AI TUTOR] Using OpenRouter (Fallback)...")
+
             headers = {
-                "Authorization": f"Bearer {self.api_key}",
+                "Authorization": f"Bearer {self.openrouter_api_key}",
                 "Content-Type": "application/json"
             }
 
             payload = {
-                "model": self.model,
+                "model": self.openrouter_model,
                 "messages": [
                     {"role": "user", "content": context}
                 ],
@@ -299,25 +477,31 @@ class AITutorOrchestrator:
             }
 
             response = requests.post(
-                f"{self.base_url}/chat/completions",
+                f"{self.openrouter_base_url}/chat/completions",
                 headers=headers,
                 json=payload,
-                timeout=60
+                timeout=self.openrouter_timeout
             )
 
             response.raise_for_status()
             result = response.json()
 
             response_text = result["choices"][0]["message"]["content"]
-            print(f"[AI TUTOR] Generated {len(response_text)} characters")
+            model_used = f"OpenRouter ({self.openrouter_model})"
 
-            return response_text
+            print(f"[AI TUTOR] ✓ OpenRouter success - Generated {len(response_text)} characters")
+            logger.info(f"[AI TUTOR] OpenRouter - Model: {self.openrouter_model}")
+
+            return response_text, model_used
 
         except Exception as e:
-            print(f"[AI TUTOR ERROR] {e}")
+            print(f"[AI TUTOR ERROR] OpenRouter also failed: {str(e)}")
+            logger.error(f"[AI TUTOR] OpenRouter error: {str(e)}")
             if hasattr(e, 'response') and e.response is not None:
                 print(f"[AI TUTOR ERROR] Response: {e.response.text}")
-            return f"I apologize, but I encountered an error. Please try again."
+
+            error_message = "I apologize, but I encountered an error. Please try again."
+            return error_message, "Error"
 
     async def _retrieve_from_material(
         self,
@@ -375,6 +559,10 @@ class AITutorOrchestrator:
         """Clear session from memory"""
         if session_id in self.active_sessions:
             del self.active_sessions[session_id]
+
+        # Also clear Garuda conversation ID
+        if session_id in self.garuda_conversations:
+            del self.garuda_conversations[session_id]
 
 # Initialize orchestrator
 ai_tutor_orchestrator = AITutorOrchestrator()

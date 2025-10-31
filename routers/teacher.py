@@ -1,7 +1,7 @@
 # routers/teacher.py
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from database import get_db
 from models import TeacherProfile, User
@@ -63,7 +63,12 @@ def create_k12_assessment(
     end_time: datetime,
     duration_minutes: int,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    # Material-based question generation
+    use_material: bool = False,
+    material_id: Optional[int] = None,
+    from_page: Optional[int] = None,
+    to_page: Optional[int] = None
 ):
     """Create a K-12 assessment for students"""
 
@@ -99,7 +104,11 @@ def create_k12_assessment(
         class_name,
         subject,
         chapter,
-        db
+        db,
+        use_material,
+        material_id,
+        from_page,
+        to_page
     )
 
     return {
@@ -205,31 +214,109 @@ def get_teacher_k12_summary(teacher_id: int, db: Session = Depends(get_db)):
 
 
 # Helper function for background question generation
-def generate_and_store_k12_questions(assessment_id: int, class_name: str, subject: str, chapter: str, db: Session):
+def generate_and_store_k12_questions(
+    assessment_id: int,
+    class_name: str,
+    subject: str,
+    chapter: str,
+    db: Session,
+    use_material: bool = False,
+    material_id: Optional[int] = None,
+    from_page: Optional[int] = None,
+    to_page: Optional[int] = None
+):
     """
-    Generate K-12 questions using AI with REAL CBSE syllabus content
-    Fetches syllabus from database and generates contextual MCQs
+    Generate K-12 questions using AI with REAL CBSE syllabus content OR uploaded material
+
+    Args:
+        assessment_id: ID of the assessment
+        class_name: Class level (e.g., '9', '10')
+        subject: Subject name
+        chapter: Chapter name (optional if using material)
+        db: Database session
+        use_material: Whether to generate from uploaded material
+        material_id: ID of uploaded material (if use_material=True)
+        from_page: Starting page number (if use_material=True)
+        to_page: Ending page number (if use_material=True)
     """
     try:
-        print(f"🔄 Generating questions for: Class {class_name} - {subject} - {chapter}")
+        if use_material and material_id:
+            # MATERIAL-BASED QUESTION GENERATION
+            print(f"🔄 [MATERIAL MODE] Generating questions from material {material_id}, pages {from_page}-{to_page}")
+            print(f"   Class {class_name} - {subject}")
 
-        # Get syllabus content from database
-        syllabus_service = get_syllabus_service(db)
-        syllabus_content = syllabus_service.get_syllabus_content(
-            class_name=class_name,
-            subject=subject,
-            chapter=chapter
-        )
+            try:
+                # Import material services
+                from services.material_content_extractor import extract_material_content
+                from services.ai_question_generator import generate_questions_from_material
 
-        # Generate 10 questions using AI with syllabus content
-        ai_questions = generate_questions(
-            board="CBSE",
-            class_name=class_name,
-            subject=subject,
-            chapter=chapter,
-            num_questions=10,
-            syllabus_content=syllabus_content  # Real CBSE content!
-        )
+                # Extract content from material
+                material_content = extract_material_content(
+                    material_id=material_id,
+                    from_page=from_page or 1,
+                    to_page=to_page or 10,
+                    db=db
+                )
+
+                # Generate questions from material
+                ai_questions = generate_questions_from_material(
+                    material_content=material_content,
+                    subject=subject,
+                    class_name=class_name,
+                    num_questions=10
+                )
+
+                print(f"✅ [MATERIAL MODE] Generated {len(ai_questions)} questions from material")
+
+            except Exception as material_error:
+                print(f"❌ [MATERIAL MODE] Material generation failed: {material_error}")
+                print(f"🔄 [FALLBACK] Switching to syllabus-based generation...")
+
+                # Fallback to syllabus
+                syllabus_service = get_syllabus_service(db)
+                syllabus_content = syllabus_service.get_syllabus_content(
+                    class_name=class_name,
+                    subject=subject,
+                    chapter=chapter or "General Topics"
+                )
+
+                ai_questions = generate_questions(
+                    board="CBSE",
+                    class_name=class_name,
+                    subject=subject,
+                    chapter=chapter or "General Topics",
+                    num_questions=10,
+                    syllabus_content=syllabus_content
+                )
+
+                print(f"✅ [FALLBACK] Generated {len(ai_questions)} questions from syllabus")
+
+        else:
+            # SYLLABUS-BASED QUESTION GENERATION (existing behavior)
+            print(f"🔄 [SYLLABUS MODE] Generating questions for: Class {class_name} - {subject} - {chapter}")
+
+            # Get syllabus content from database
+            syllabus_service = get_syllabus_service(db)
+            syllabus_content = syllabus_service.get_syllabus_content(
+                class_name=class_name,
+                subject=subject,
+                chapter=chapter
+            )
+
+            # Generate 10 questions using AI with syllabus content
+            ai_questions = generate_questions(
+                board="CBSE",
+                class_name=class_name,
+                subject=subject,
+                chapter=chapter,
+                num_questions=10,
+                syllabus_content=syllabus_content
+            )
+
+            if syllabus_content:
+                print(f"✅ [SYLLABUS MODE] Generated {len(ai_questions)} AI questions with REAL syllabus content")
+            else:
+                print(f"⚠️ [SYLLABUS MODE] Generated {len(ai_questions)} sample questions (no syllabus found)")
 
         # Store questions in database
         for q_data in ai_questions:
@@ -243,12 +330,10 @@ def generate_and_store_k12_questions(assessment_id: int, class_name: str, subjec
             db.add(question)
 
         db.commit()
-
-        if syllabus_content:
-            print(f"✅ Generated {len(ai_questions)} AI questions with REAL syllabus content for assessment {assessment_id}")
-        else:
-            print(f"⚠️ Generated {len(ai_questions)} sample questions (no syllabus content found) for assessment {assessment_id}")
+        print(f"✅ Stored {len(ai_questions)} questions in database for assessment {assessment_id}")
 
     except Exception as e:
         print(f"❌ Error generating questions: {e}")
+        import traceback
+        traceback.print_exc()
         db.rollback()
