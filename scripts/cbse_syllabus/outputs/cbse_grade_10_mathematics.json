@@ -1,0 +1,263 @@
+{
+  "board": "CBSE",
+  "grade": "10",
+  "subject": "Mathematics",
+  "subject_code": "041",
+  "academic_year": "2024-25",
+  "total_marks": 100,
+  "theory_marks": 80,
+  "internal_assessment": 20,
+  "units": [
+    {
+      "unit_number": 1,
+      "unit_name": "Number Systems",
+      "marks": 6,
+      "periods": 15,
+      "chapters": [
+        {
+          "chapter_number": 1,
+          "chapter_name": "Real Numbers",
+          "topics": [
+            "Euclid's Division Lemma",
+            "Euclid's Division Algorithm",
+            "Fundamental Theorem of Arithmetic",
+            "Revisiting Irrational Numbers",
+            "Revisiting Rational Numbers and Their Decimal Expansions"
+          ],
+          "learning_outcomes": [
+            "Apply Euclid's division algorithm to find HCF",
+            "Prove irrationality of numbers",
+            "Understand decimal representation of rational numbers"
+          ]
+        }
+      ]
+    },
+    {
+      "unit_number": 2,
+      "unit_name": "Algebra",
+      "marks": 20,
+      "periods": 48,
+      "chapters": [
+        {
+          "chapter_number": 2,
+          "chapter_name": "Polynomials",
+          "topics": [
+            "Zeros of a Polynomial",
+            "Relationship between Zeros and Coefficients of a Polynomial",
+            "Division Algorithm for Polynomials"
+          ],
+          "learning_outcomes": [
+            "Verify relationship between zeros and coefficients",
+            "Apply division algorithm"
+          ]
+        },
+        {
+          "chapter_number": 3,
+          "chapter_name": "Pair of Linear Equations in Two Variables",
+          "topics": [
+            "Graphical Method of Solution",
+            "Algebraic Methods: Substitution Method",
+            "Algebraic Methods: Elimination Method",
+            "Algebraic Methods: Cross-Multiplication Method",
+            "Equations Reducible to a Pair of Linear Equations"
+          ],
+          "learning_outcomes": [
+            "Solve linear equations graphically",
+            "Apply algebraic methods to solve real-world problems"
+          ]
+        },
+        {
+          "chapter_number": 4,
+          "chapter_name": "Quadratic Equations",
+          "topics": [
+            "Standard Form of a Quadratic Equation",
+            "Solution by Factorization",
+            "Solution by Completing the Square",
+            "Quadratic Formula",
+            "Nature of Roots (Discriminant)"
+          ],
+          "learning_outcomes": [
+            "Solve quadratic equations using various methods",
+            "Determine nature of roots using discriminant"
+          ]
+        },
+        {
+          "chapter_number": 5,
+          "chapter_name": "Arithmetic Progressions",
+          "topics": [
+            "nth Term of an AP",
+            "Sum of First n Terms of an AP",
+            "Applications of AP in Real Life"
+          ],
+          "learning_outcomes": [
+            "Derive and apply formulas for AP",
+            "Solve word problems using AP"
+          ]
+        }
+      ]
+    },
+    {
+      "unit_number": 3,
+      "unit_name": "Coordinate Geometry",
+      "marks": 6,
+      "periods": 15,
+      "chapters": [
+        {
+          "chapter_number": 7,
+          "chapter_name": "Coordinate Geometry",
+          "topics": [
+            "Distance Formula",
+            "Section Formula",
+            "Area of a Triangle"
+          ],
+          "learning_outcomes": [
+            "Calculate distance between two points",
+            "Find coordinates of point dividing line segment",
+            "Calculate area using coordinates"
+          ]
+        }
+      ]
+    },
+    {
+      "unit_number": 4,
+      "unit_name": "Geometry",
+      "marks": 15,
+      "periods": 25,
+      "chapters": [
+        {
+          "chapter_number": 6,
+          "chapter_name": "Triangles",
+          "topics": [
+            "Similar Triangles",
+            "Criteria for Similarity: AAA, SSS, SAS",
+            "Areas of Similar Triangles",
+            "Pythagoras Theorem",
+            "Converse of Pythagoras Theorem"
+          ],
+          "learning_outcomes": [
+            "Prove similarity of triangles",
+            "Apply Pythagoras theorem in problem solving"
+          ]
+        },
+        {
+          "chapter_number": 10,
+          "chapter_name": "Circles",
+          "topics": [
+            "Tangent to a Circle",
+            "Number of Tangents from a Point",
+            "Properties of Tangents"
+          ],
+          "learning_outcomes": [
+            "Construct tangents to a circle",
+            "Prove and apply tangent properties"
+          ]
+        }
+      ]
+    },
+    {
+      "unit_number": 5,
+      "unit_name": "Trigonometry",
+      "marks": 12,
+      "periods": 35,
+      "chapters": [
+        {
+          "chapter_number": 8,
+          "chapter_name": "Introduction to Trigonometry",
+          "topics": [
+            "Trigonometric Ratios: sin, cos, tan, cot, sec, cosec",
+            "Trigonometric Ratios of Specific Angles: 0°, 30°, 45°, 60°, 90°",
+            "Trigonometric Identities",
+            "Simple Identities Proofs"
+          ],
+          "learning_outcomes": [
+            "Calculate trigonometric ratios",
+            "Prove and apply trigonometric identities"
+          ]
+        },
+        {
+          "chapter_number": 9,
+          "chapter_name": "Some Applications of Trigonometry",
+          "topics": [
+            "Heights and Distances",
+            "Angle of Elevation",
+            "Angle of Depression",
+            "Line of Sight"
+          ],
+          "learning_outcomes": [
+            "Solve real-world problems involving heights and distances"
+          ]
+        }
+      ]
+    },
+    {
+      "unit_number": 6,
+      "unit_name": "Mensuration",
+      "marks": 10,
+      "periods": 24,
+      "chapters": [
+        {
+          "chapter_number": 12,
+          "chapter_name": "Areas Related to Circles",
+          "topics": [
+            "Area of a Circle",
+            "Area of Sectors and Segments",
+            "Areas of Combinations of Plane Figures"
+          ],
+          "learning_outcomes": [
+            "Calculate areas of circular regions",
+            "Solve problems on combined figures"
+          ]
+        },
+        {
+          "chapter_number": 13,
+          "chapter_name": "Surface Areas and Volumes",
+          "topics": [
+            "Surface Area of Combination of Solids",
+            "Volume of Combination of Solids",
+            "Conversion of Solid from One Shape to Another",
+            "Frustum of a Cone"
+          ],
+          "learning_outcomes": [
+            "Calculate surface areas and volumes of combined solids",
+            "Solve conversion problems"
+          ]
+        }
+      ]
+    },
+    {
+      "unit_number": 7,
+      "unit_name": "Statistics and Probability",
+      "marks": 11,
+      "periods": 28,
+      "chapters": [
+        {
+          "chapter_number": 14,
+          "chapter_name": "Statistics",
+          "topics": [
+            "Mean of Grouped Data: Direct Method, Assumed Mean Method, Step Deviation Method",
+            "Mode of Grouped Data",
+            "Median of Grouped Data",
+            "Cumulative Frequency Graph (Ogive)"
+          ],
+          "learning_outcomes": [
+            "Calculate central tendencies for grouped data",
+            "Draw and interpret ogive"
+          ]
+        },
+        {
+          "chapter_number": 15,
+          "chapter_name": "Probability",
+          "topics": [
+            "Classical Definition of Probability",
+            "Simple Problems on Single Events",
+            "Probability of 'not', 'and', 'or' Events"
+          ],
+          "learning_outcomes": [
+            "Calculate probability of events",
+            "Apply probability in real situations"
+          ]
+        }
+      ]
+    }
+  ]
+}

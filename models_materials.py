@@ -49,7 +49,7 @@ class TeachingMaterial(Base):
     processed_at = Column(TIMESTAMP, nullable=True)
 
     # Relationships
-    teacher = relationship("User", back_populates="teaching_materials")
+    teacher = relationship("User")
     chunks = relationship("MaterialChunk", back_populates="material", cascade="all, delete-orphan")
 
     def __repr__(self):

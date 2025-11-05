@@ -1,10 +1,16 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
-from routers import auth, teacher, student, modules, assessments, submissions, outcomes, performance, tracking, courses, admin, career_progression, ai_tutor, materials
+from routers import auth, teacher, student, modules, assessments, submissions, outcomes, performance, tracking, courses, admin, career_progression, ai_tutor, materials, growth_plan, knowledge_tracking
 from security import get_current_user, require_role
 from models import User
 from models_cpd import CPDCourse, TeacherCourseRecommendation, TeacherCourseProgress
+from models_knowledge_tracking import (
+    TeacherAssessmentAttempt,
+    TeacherAttemptLimit,
+    TeacherAssessmentSummary,
+    AssessmentSession
+)
 
 # ✅ NEW IMPORTS
 from dotenv import load_dotenv
@@ -59,6 +65,8 @@ app.include_router(admin.router)
 app.include_router(career_progression.router, prefix="/api")  # NEW: Career Progression
 app.include_router(ai_tutor.router)  # NEW: AI Tutor
 app.include_router(materials.router, prefix="/api")  # NEW: Teaching Materials Upload
+app.include_router(growth_plan.router, prefix="/api")  # NEW: Enhanced Growth Plan
+app.include_router(knowledge_tracking.router)  # NEW: Knowledge Assessment Tracking
 
 @app.get("/")
 def root():
