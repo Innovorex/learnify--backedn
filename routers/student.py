@@ -68,13 +68,58 @@ def get_questions(assessment_id: int, db: Session = Depends(get_db)):
 
     # Fetch questions (don't send correct answers to frontend)
     questions = db.query(K12Question).filter(K12Question.assessment_id == assessment_id).all()
-    return [
-        {
+
+    question_list = []
+    for q in questions:
+        # Build response without correct answers
+        question_response = {
             "id": q.id,
             "question": q.question,
-            "options": q.options
-        } for q in questions
-    ]
+            "question_type": q.question_type,
+            "marks": q.marks
+        }
+
+        # Add question data based on type, removing correct answers
+        if q.question_type == 'multiple_choice' or q.question_type == 'multi_select':
+            # Send options but NOT correct_answer/correct_answers
+            if q.question_data and 'options' in q.question_data:
+                question_response['options'] = q.question_data['options']
+            elif q.options:
+                question_response['options'] = q.options
+        elif q.question_type == 'true_false':
+            # No data needed, just the question
+            pass
+        elif q.question_type == 'short_answer':
+            # Send max_words if available
+            if q.question_data and 'max_words' in q.question_data:
+                question_response['max_words'] = q.question_data['max_words']
+        elif q.question_type == 'fill_blank':
+            # No hints, just the question with blanks
+            pass
+        elif q.question_type == 'ordering':
+            # Send items to be ordered
+            if q.question_data and 'items' in q.question_data:
+                question_response['items'] = q.question_data['items']
+
+        question_list.append(question_response)
+
+    # Calculate remaining time based on exam duration (not window end time)
+    # Students get the full duration_minutes when they start the exam
+    time_remaining_seconds = assessment.duration_minutes * 60
+
+    # Return questions with assessment metadata
+    return {
+        "assessment": {
+            "id": assessment.id,
+            "subject": assessment.subject,
+            "chapter": assessment.chapter,
+            "duration_minutes": assessment.duration_minutes,
+            "start_time": start_time.isoformat(),
+            "end_time": end_time.isoformat(),
+            "time_remaining_seconds": time_remaining_seconds
+        },
+        "questions": question_list
+    }
 
 
 @router.post("/submit-exam")

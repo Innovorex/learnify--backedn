@@ -3,14 +3,17 @@ Materials Router
 Handles upload, processing, and retrieval of teaching materials (PDF, DOCX, TXT)
 """
 
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, BackgroundTasks, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime
+import os
+from jose import JWTError, jwt
 
 from database import get_db
-from security import get_current_user
+from security import get_current_user, JWT_SECRET, JWT_ALGORITHM
 from models import User
 from models_materials import TeachingMaterial, MaterialChunk
 from schemas_materials import (
@@ -26,6 +29,43 @@ from services.text_chunker import TextChunkerService
 from services.vector_store_service import get_vector_store
 
 router = APIRouter(prefix="/materials", tags=["Materials"])
+
+
+# ============================================================
+# CUSTOM AUTH FOR FILE PREVIEW (supports query parameter token)
+# ============================================================
+async def get_current_user_from_token_or_query(
+    token: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    Authenticate user from query parameter token (for iframe requests)
+    Falls back to standard header authentication
+    """
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    # Try to get token from query parameter (for iframe)
+    if not token:
+        # If no query token, this will fail - iframe can't send Authorization headers
+        raise credentials_exception
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id: int = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise credentials_exception
+
+    return user
 
 
 # ============================================================
@@ -375,4 +415,56 @@ async def get_processing_status(
         progress=progress,
         message=message,
         error=material.processing_error
+    )
+
+
+# ============================================================
+# SERVE FILE FOR PREVIEW
+# ============================================================
+@router.get("/{material_id}/file")
+async def get_material_file(
+    material_id: int,
+    current_user: User = Depends(get_current_user_from_token_or_query),
+    db: Session = Depends(get_db)
+):
+    """
+    Serve the original uploaded file for preview
+    Returns the file with appropriate content-type for browser preview
+    Accepts token as query parameter (?token=xxx) for iframe authentication
+    """
+    material = db.query(TeachingMaterial).filter(
+        TeachingMaterial.id == material_id,
+        TeachingMaterial.teacher_id == current_user.id
+    ).first()
+
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found")
+
+    # Check if file exists
+    if not os.path.exists(material.file_path):
+        raise HTTPException(status_code=404, detail="File not found on disk")
+
+    # Determine media type
+    media_type_map = {
+        '.pdf': 'application/pdf',
+        '.txt': 'text/plain',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.doc': 'application/msword',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+    }
+
+    file_ext = os.path.splitext(material.original_filename)[1].lower()
+    media_type = media_type_map.get(file_ext, 'application/octet-stream')
+
+    # Return file with inline disposition for preview
+    return FileResponse(
+        path=material.file_path,
+        media_type=media_type,
+        filename=material.original_filename,
+        headers={
+            "Content-Disposition": f'inline; filename="{material.original_filename}"'
+        }
     )

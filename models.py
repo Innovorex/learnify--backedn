@@ -697,3 +697,120 @@ class NCERTPDFSource(Base):
     # Metadata
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+# ============================================================================
+# REAL CPD COURSE MODELS (Course Scraping System)
+# ============================================================================
+
+class RealCPDCourse(Base):
+    """Real CPD courses scraped from DIKSHA, SWAYAM, NISHTHA, etc."""
+    __tablename__ = "real_cpd_courses"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Course Identification
+    course_id_external = Column(String(200), nullable=False, unique=True, index=True)
+    # External ID from source platform (e.g., DIKSHA course ID)
+
+    platform = Column(String(50), nullable=False, index=True)
+    # Values: 'DIKSHA', 'SWAYAM', 'NISHTHA', 'NCERT', 'Other'
+
+    # Course Details
+    title = Column(String(500), nullable=False, index=True)
+    description = Column(Text, nullable=True)
+
+    # Course URL (direct enrollment link)
+    course_url = Column(String(1000), nullable=False)
+
+    # Course Metadata
+    category = Column(String(100), nullable=True, index=True)
+    # E.g., 'Subject Knowledge', 'Pedagogy', 'Assessment', 'Classroom Management'
+
+    subjects = Column(String(200), nullable=True, index=True)
+    # Comma-separated: 'Mathematics,Science' or 'Mathematics'
+
+    grades = Column(String(100), nullable=True, index=True)
+    # Comma-separated: '6,7,8,9,10' or 'Primary' or 'Secondary'
+
+    difficulty_level = Column(String(20), nullable=True, index=True)
+    # Values: 'beginner', 'intermediate', 'advanced'
+
+    duration_hours = Column(Integer, nullable=True)
+    language = Column(String(50), nullable=True, index=True)  # 'English', 'Hindi', 'Telugu'
+
+    # Certificate
+    certificate_available = Column(Boolean, default=False)
+
+    # Target Audience
+    target_roles = Column(String(200), nullable=True)
+    # Comma-separated: 'Primary Teacher,Secondary Teacher,Principal'
+
+    # Content Quality
+    rating = Column(Float, nullable=True)  # 0-5 scale
+    total_enrollments = Column(Integer, nullable=True)
+
+    # Keywords for matching
+    keywords = Column(Text, nullable=True)
+    # JSON array of keywords extracted from title + description
+
+    # Course Provider
+    provider = Column(String(200), nullable=True)
+    # E.g., 'NCERT', 'NIOS', 'IGNOU', 'State SCERT'
+
+    # Scraping Metadata
+    scraped_at = Column(DateTime, server_default=func.now())
+    last_verified_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True, index=True)
+    # Set to False if course is no longer available
+
+    # Search optimization
+    search_vector = Column(Text, nullable=True)
+    # Concatenated searchable text: title + description + keywords
+
+    # Metadata
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class CPDCourseRecommendation(Base):
+    """Teacher-specific course recommendations (replaces AI hallucination)"""
+    __tablename__ = "cpd_course_recommendations"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Teacher
+    teacher_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Recommended Course
+    course_id = Column(Integer, ForeignKey("real_cpd_courses.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Recommendation Context
+    recommendation_reason = Column(Text, nullable=True)
+    # E.g., "Your Algebra score declined by 25% in last assessment"
+
+    priority = Column(String(20), default="medium", index=True)
+    # Values: 'urgent', 'high', 'medium', 'low'
+
+    match_score = Column(Float, nullable=True)
+    # 0-100 score indicating how well course matches teacher needs
+
+    improvement_areas = Column(Text, nullable=True)
+    # JSON array: ["Algebra concepts", "Problem solving"]
+
+    # Teacher Action
+    status = Column(String(20), default="pending", index=True)
+    # Values: 'pending', 'viewed', 'enrolled', 'dismissed', 'completed'
+
+    viewed_at = Column(DateTime, nullable=True)
+    enrolled_at = Column(DateTime, nullable=True)
+    dismissed_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    teacher = relationship("User", foreign_keys=[teacher_id])
+    course = relationship("RealCPDCourse", foreign_keys=[course_id])

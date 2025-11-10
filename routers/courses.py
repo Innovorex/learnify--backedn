@@ -6,7 +6,8 @@ from database import get_db
 from models import User
 from models_cpd import CPDCourse, TeacherCourseRecommendation, TeacherCourseProgress
 from security import require_role
-from services.course_recommender import generate_course_recommendations, get_teacher_recommendations
+# Smart Course Recommender - Generates real platform links based on performance
+from services.course_recommender_smart import generate_course_recommendations, get_teacher_recommendations
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 

@@ -143,10 +143,25 @@ def get_k12_assessment_questions(assessment_id: int, db: Session = Depends(get_d
     return [
         {
             "id": q.id,
+            "assessment_id": q.assessment_id,
             "question": q.question,
+
+            # V2 fields (multi-type questions)
+            "question_type": q.question_type,
+            "question_data": q.question_data,
+
+            # Legacy fields (V1 compatibility)
             "options": q.options,
             "correct_answer": q.correct_answer,
-            "difficulty": q.difficulty
+
+            # Metadata
+            "difficulty": q.difficulty,
+            "marks": q.marks,
+            "explanation": q.explanation,
+            "concept_tested": q.concept_tested,
+            "ncert_chapter": q.ncert_chapter,
+            "ncert_subject": q.ncert_subject,
+            "ncert_grade": q.ncert_grade
         } for q in questions
     ]
 
@@ -213,7 +228,239 @@ def get_teacher_k12_summary(teacher_id: int, db: Session = Depends(get_db)):
     return summary
 
 
-# Helper function for background question generation
+# NEW: Get available NCERT chapters for dropdown
+@router.get("/ncert/chapters/{grade}/{subject}")
+def get_ncert_chapters(grade: int, subject: str, db: Session = Depends(get_db)):
+    """
+    Get list of available NCERT chapters for a subject
+
+    Returns:
+        [
+            {"chapter_number": 1, "chapter_name": "Real Numbers", "available": true, "content_pieces": 5},
+            {"chapter_number": 2, "chapter_name": "Polynomials", "available": true, "content_pieces": 8},
+            ...
+        ]
+    """
+    from services.ncert_content_service import NCERTContentService
+    ncert_service = NCERTContentService(db)
+
+    chapters = ncert_service.get_available_chapters(grade, subject)
+
+    return chapters
+
+
+# NEW: V2 Endpoint for Multi-Type Question Generation
+from pydantic import BaseModel
+from typing import Dict
+
+class CreateAssessmentV2Request(BaseModel):
+    teacher_id: int
+    class_name: str
+    section: str
+    subject: str
+    chapter: str
+    language: str = "English"  # "English" or "Hindi"
+    start_time: str
+    end_time: str
+    duration_minutes: int
+    question_spec: Dict[str, int]
+
+@router.post("/k12/create-assessment-v2")
+def create_assessment_v2(
+    request: CreateAssessmentV2Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """
+    Create K-12 assessment with multi-type question generation from NCERT content
+
+    Request body:
+    {
+        "teacher_id": 1,
+        "class_name": "10",
+        "section": "A",
+        "subject": "Mathematics",
+        "chapter": "Real Numbers",
+        "start_time": "2025-11-06T10:00:00",
+        "end_time": "2025-11-06T11:00:00",
+        "duration_minutes": 60,
+        "question_spec": {
+            "multiple_choice": 6,
+            "true_false": 4,
+            "short_answer": 3,
+            "fill_blank": 2,
+            "multi_select": 0,
+            "ordering": 0
+        }
+    }
+    """
+
+    # Validate teacher
+    teacher = db.query(User).filter(
+        User.id == request.teacher_id,
+        User.role == "teacher"
+    ).first()
+
+    if not teacher:
+        raise HTTPException(404, "Teacher not found")
+
+    # Validate NCERT content exists
+    from services.ncert_content_service import NCERTContentService
+    ncert_service = NCERTContentService(db)
+
+    grade = int(request.class_name)
+    chapter_exists = ncert_service.validate_chapter_exists(
+        grade=grade,
+        subject=request.subject,
+        chapter_name=request.chapter
+    )
+
+    if not chapter_exists:
+        raise HTTPException(
+            400,
+            f"No NCERT content found for Class {grade}, {request.subject}, Chapter: {request.chapter}"
+        )
+
+    # Validate question spec
+    total_questions = sum(request.question_spec.values())
+    if total_questions == 0:
+        raise HTTPException(400, "At least one question type must be selected")
+
+    if total_questions > 50:
+        raise HTTPException(400, "Maximum 50 questions allowed per assessment")
+
+    # Parse datetime strings
+    from datetime import datetime
+    start_dt = datetime.fromisoformat(request.start_time)
+    end_dt = datetime.fromisoformat(request.end_time)
+
+    # Create assessment
+    new_assessment = K12Assessment(
+        teacher_id=request.teacher_id,
+        class_name=request.class_name,
+        section=request.section,
+        subject=request.subject,
+        chapter=request.chapter,
+        language=request.language,
+        start_time=start_dt.replace(tzinfo=None) if start_dt.tzinfo else start_dt,
+        end_time=end_dt.replace(tzinfo=None) if end_dt.tzinfo else end_dt,
+        duration_minutes=request.duration_minutes
+    )
+
+    db.add(new_assessment)
+    db.commit()
+    db.refresh(new_assessment)
+
+    print(f"✅ Assessment created: ID {new_assessment.id}")
+    print(f"   Question spec: {request.question_spec}")
+
+    # Generate questions in background
+    background_tasks.add_task(
+        generate_and_store_k12_questions_v2,
+        assessment_id=new_assessment.id,
+        grade=grade,
+        subject=request.subject,
+        chapter=request.chapter,
+        language=request.language,
+        question_spec=request.question_spec,
+        db=db
+    )
+
+    return {
+        "id": new_assessment.id,
+        "message": f"Assessment created. Generating {total_questions} questions in background...",
+        "total_questions": total_questions,
+        "question_breakdown": request.question_spec,
+        "assessment": new_assessment
+    }
+
+
+# NEW: V2 Background task for multi-type question generation
+def generate_and_store_k12_questions_v2(
+    assessment_id: int,
+    grade: int,
+    subject: str,
+    chapter: str,
+    language: str,
+    question_spec: dict,
+    db: Session
+):
+    """
+    Generate multi-type questions from NCERT content using V2 generator
+
+    Args:
+        assessment_id: ID of the assessment
+        grade: Grade level (1-10)
+        subject: Subject name
+        chapter: Chapter name
+        language: Language for questions ("English" or "Hindi")
+        question_spec: {"multiple_choice": 6, "true_false": 4, ...}
+        db: Database session
+    """
+    try:
+        print(f"🔄 [V2] Starting question generation for assessment {assessment_id}")
+        print(f"   Grade: {grade}, Subject: {subject}, Chapter: {chapter}")
+        print(f"   Question spec: {question_spec}")
+
+        # Step 1: Get NCERT content
+        from services.ncert_content_service import NCERTContentService
+        ncert_service = NCERTContentService(db)
+
+        ncert_content = ncert_service.get_chapter_content(
+            grade=grade,
+            subject=subject,
+            chapter_name=chapter
+        )
+
+        if not ncert_content:
+            print(f"❌ No NCERT content found")
+            return
+
+        print(f"✅ Fetched NCERT content ({ncert_content['total_length']} chars)")
+
+        # Step 2: Generate questions using V2 AI generator
+        from services.ai_question_generator_v2 import AIQuestionGeneratorV2
+        generator = AIQuestionGeneratorV2()
+
+        questions = generator.generate_questions(
+            ncert_content=ncert_content,
+            question_spec=question_spec,
+            grade=grade,
+            subject=subject,
+            chapter=chapter,
+            language=language
+        )
+
+        print(f"✅ Generated {len(questions)} questions")
+
+        # Step 3: Store questions with full metadata
+        for q in questions:
+            question = K12Question(
+                assessment_id=assessment_id,
+                question=q["question"],
+                question_type=q["question_type"],
+                question_data=q["question_data"],
+                difficulty=q["difficulty"],
+                marks=q["marks"],
+                explanation=q.get("explanation"),
+                ncert_grade=grade,
+                ncert_subject=subject,
+                ncert_chapter=chapter,
+                concept_tested=q.get("concept_tested", "")
+            )
+            db.add(question)
+
+        db.commit()
+        print(f"✅ Stored {len(questions)} questions for assessment {assessment_id}")
+
+    except Exception as e:
+        print(f"❌ Error in V2 question generation: {e}")
+        import traceback
+        traceback.print_exc()
+        db.rollback()
+
+
+# Helper function for background question generation (OLD - kept for backward compatibility)
 def generate_and_store_k12_questions(
     assessment_id: int,
     class_name: str,

@@ -213,6 +213,18 @@ async def start_ai_tutor_session(
     try:
         is_bed_qualified = get_teacher_qualification(teacher_id, db)
 
+        # Get teacher's board and state from their profile
+        teacher_profile = db.execute(
+            text("SELECT board, state FROM teacher_profiles WHERE user_id = :user_id"),
+            {"user_id": teacher_id}
+        ).fetchone()
+
+        # Use teacher's board/state if available, otherwise fall back to request
+        teacher_board = teacher_profile[0] if teacher_profile and teacher_profile[0] else request.board
+        teacher_state = teacher_profile[1] if teacher_profile and teacher_profile[1] else request.state
+
+        print(f"[AI TUTOR] Using board: {teacher_board}, state: {teacher_state} for teacher {teacher_id}")
+
         # Get material info if material_id provided
         material_filename = None
         material_title = None
@@ -248,8 +260,8 @@ async def start_ai_tutor_session(
             topic_name=topic_name,
             subject=request.subject,
             grade=request.grade,
-            state=request.state,
-            board=request.board,
+            state=teacher_state,
+            board=teacher_board,
             is_bed_qualified=is_bed_qualified,
             db=db
         )
@@ -260,11 +272,12 @@ async def start_ai_tutor_session(
             topic_name=topic_name,  # Use the validated topic_name
             subject=request.subject,
             grade=request.grade,
-            state=request.state,
-            board=request.board,
+            state=teacher_state,
+            board=teacher_board,
             is_bed_qualified=is_bed_qualified,
             material_id=request.material_id if request.use_uploaded_material else None,
-            material_filename=material_filename
+            material_filename=material_filename,
+            db=db  # Pass database session for CBSE content retrieval
         )
 
         save_message_db(

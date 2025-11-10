@@ -1,0 +1,488 @@
+{
+  "total_expected": 116,
+  "total_found": 52,
+  "total_valid": 49,
+  "total_invalid": 3,
+  "total_missing": 64,
+  "by_grade": {
+    "1": {
+      "expected": 5,
+      "found": 4,
+      "valid": 4,
+      "invalid": 0,
+      "missing": 1
+    },
+    "2": {
+      "expected": 6,
+      "found": 3,
+      "valid": 3,
+      "invalid": 0,
+      "missing": 3
+    },
+    "3": {
+      "expected": 6,
+      "found": 4,
+      "valid": 4,
+      "invalid": 0,
+      "missing": 2
+    },
+    "4": {
+      "expected": 6,
+      "found": 2,
+      "valid": 2,
+      "invalid": 0,
+      "missing": 4
+    },
+    "5": {
+      "expected": 9,
+      "found": 5,
+      "valid": 4,
+      "invalid": 1,
+      "missing": 4
+    },
+    "6": {
+      "expected": 19,
+      "found": 7,
+      "valid": 7,
+      "invalid": 0,
+      "missing": 12
+    },
+    "7": {
+      "expected": 19,
+      "found": 7,
+      "valid": 7,
+      "invalid": 0,
+      "missing": 12
+    },
+    "8": {
+      "expected": 11,
+      "found": 7,
+      "valid": 5,
+      "invalid": 2,
+      "missing": 4
+    },
+    "9": {
+      "expected": 24,
+      "found": 7,
+      "valid": 7,
+      "invalid": 0,
+      "missing": 17
+    },
+    "10": {
+      "expected": 11,
+      "found": 6,
+      "valid": 6,
+      "invalid": 0,
+      "missing": 5
+    }
+  },
+  "invalid_files": [
+    {
+      "grade": 5,
+      "subject": "Sanskrit",
+      "medium": "english",
+      "filename": "grade5_sanskrit_english.pdf",
+      "error": "File too small (0.00 MB)"
+    },
+    {
+      "grade": 8,
+      "subject": "Biological_Science",
+      "medium": "english",
+      "filename": "grade8_biological_science_english.pdf",
+      "error": "File too small (0.00 MB)"
+    },
+    {
+      "grade": 8,
+      "subject": "Social_Studies",
+      "medium": "english",
+      "filename": "grade8_social_studies_english.pdf",
+      "error": "File too small (0.00 MB)"
+    }
+  ],
+  "missing_files": [
+    {
+      "grade": 1,
+      "subject": "Mathematics",
+      "medium": "telugu",
+      "filename": "grade1_mathematics_telugu.pdf"
+    },
+    {
+      "grade": 2,
+      "subject": "Mathematics",
+      "medium": "telugu",
+      "filename": "grade2_mathematics_telugu.pdf"
+    },
+    {
+      "grade": 2,
+      "subject": "Mathematics",
+      "medium": "hindi",
+      "filename": "grade2_mathematics_hindi.pdf"
+    },
+    {
+      "grade": 2,
+      "subject": "Mathematics",
+      "medium": "urdu",
+      "filename": "grade2_mathematics_urdu.pdf"
+    },
+    {
+      "grade": 3,
+      "subject": "Mathematics",
+      "medium": "hindi",
+      "filename": "grade3_mathematics_hindi.pdf"
+    },
+    {
+      "grade": 3,
+      "subject": "Urdu",
+      "medium": "urdu",
+      "filename": "grade3_urdu.pdf"
+    },
+    {
+      "grade": 4,
+      "subject": "EVS",
+      "medium": "telugu",
+      "filename": "grade4_evs_telugu.pdf"
+    },
+    {
+      "grade": 4,
+      "subject": "Mathematics",
+      "medium": "urdu",
+      "filename": "grade4_mathematics_urdu.pdf"
+    },
+    {
+      "grade": 4,
+      "subject": "Urdu",
+      "medium": "urdu",
+      "filename": "grade4_urdu.pdf"
+    },
+    {
+      "grade": 4,
+      "subject": "Sanskrit",
+      "medium": "sanskrit",
+      "filename": "grade4_sanskrit.pdf"
+    },
+    {
+      "grade": 5,
+      "subject": "Mathematics",
+      "medium": "telugu",
+      "filename": "grade5_mathematics_telugu.pdf"
+    },
+    {
+      "grade": 5,
+      "subject": "Mathematics",
+      "medium": "hindi",
+      "filename": "grade5_mathematics_hindi.pdf"
+    },
+    {
+      "grade": 5,
+      "subject": "Mathematics",
+      "medium": "urdu",
+      "filename": "grade5_mathematics_urdu.pdf"
+    },
+    {
+      "grade": 5,
+      "subject": "Urdu",
+      "medium": "urdu",
+      "filename": "grade5_urdu.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Mathematics",
+      "medium": "telugu",
+      "filename": "grade6_mathematics_telugu.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Mathematics",
+      "medium": "hindi",
+      "filename": "grade6_mathematics_hindi.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Mathematics",
+      "medium": "urdu",
+      "filename": "grade6_mathematics_urdu.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Science",
+      "medium": "telugu",
+      "filename": "grade6_science_telugu.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Science",
+      "medium": "hindi",
+      "filename": "grade6_science_hindi.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Science",
+      "medium": "urdu",
+      "filename": "grade6_science_urdu.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Social_Studies",
+      "medium": "telugu",
+      "filename": "grade6_social_studies_telugu.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Social_Studies",
+      "medium": "hindi",
+      "filename": "grade6_social_studies_hindi.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Social_Studies",
+      "medium": "urdu",
+      "filename": "grade6_social_studies_urdu.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Telugu_Second_Language",
+      "medium": "telugu",
+      "filename": "grade6_telugu_second_language.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Urdu",
+      "medium": "urdu",
+      "filename": "grade6_urdu.pdf"
+    },
+    {
+      "grade": 6,
+      "subject": "Sanskrit",
+      "medium": "sanskrit",
+      "filename": "grade6_sanskrit.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Mathematics",
+      "medium": "telugu",
+      "filename": "grade7_mathematics_telugu.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Mathematics",
+      "medium": "hindi",
+      "filename": "grade7_mathematics_hindi.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Mathematics",
+      "medium": "urdu",
+      "filename": "grade7_mathematics_urdu.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Science",
+      "medium": "telugu",
+      "filename": "grade7_science_telugu.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Science",
+      "medium": "hindi",
+      "filename": "grade7_science_hindi.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Science",
+      "medium": "urdu",
+      "filename": "grade7_science_urdu.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Social_Studies",
+      "medium": "telugu",
+      "filename": "grade7_social_studies_telugu.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Social_Studies",
+      "medium": "hindi",
+      "filename": "grade7_social_studies_hindi.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Social_Studies",
+      "medium": "urdu",
+      "filename": "grade7_social_studies_urdu.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Telugu_Second_Language",
+      "medium": "telugu",
+      "filename": "grade7_telugu_second_language.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Urdu",
+      "medium": "urdu",
+      "filename": "grade7_urdu.pdf"
+    },
+    {
+      "grade": 7,
+      "subject": "Sanskrit",
+      "medium": "sanskrit",
+      "filename": "grade7_sanskrit.pdf"
+    },
+    {
+      "grade": 8,
+      "subject": "Mathematics",
+      "medium": "telugu",
+      "filename": "grade8_mathematics_telugu.pdf"
+    },
+    {
+      "grade": 8,
+      "subject": "Physical_Science",
+      "medium": "telugu",
+      "filename": "grade8_physical_science_telugu.pdf"
+    },
+    {
+      "grade": 8,
+      "subject": "Biological_Science",
+      "medium": "telugu",
+      "filename": "grade8_biological_science_telugu.pdf"
+    },
+    {
+      "grade": 8,
+      "subject": "Social_Studies",
+      "medium": "telugu",
+      "filename": "grade8_social_studies_telugu.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Mathematics",
+      "medium": "telugu",
+      "filename": "grade9_mathematics_telugu.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Mathematics",
+      "medium": "hindi",
+      "filename": "grade9_mathematics_hindi.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Mathematics",
+      "medium": "urdu",
+      "filename": "grade9_mathematics_urdu.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Physical_Science",
+      "medium": "telugu",
+      "filename": "grade9_physical_science_telugu.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Physical_Science",
+      "medium": "hindi",
+      "filename": "grade9_physical_science_hindi.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Physical_Science",
+      "medium": "urdu",
+      "filename": "grade9_physical_science_urdu.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Biological_Science",
+      "medium": "telugu",
+      "filename": "grade9_biological_science_telugu.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Biological_Science",
+      "medium": "hindi",
+      "filename": "grade9_biological_science_hindi.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Biological_Science",
+      "medium": "urdu",
+      "filename": "grade9_biological_science_urdu.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Social_Studies",
+      "medium": "telugu",
+      "filename": "grade9_social_studies_telugu.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Social_Studies",
+      "medium": "hindi",
+      "filename": "grade9_social_studies_hindi.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Social_Studies",
+      "medium": "urdu",
+      "filename": "grade9_social_studies_urdu.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Environmental_Education",
+      "medium": "telugu",
+      "filename": "grade9_environmental_education_telugu.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Environmental_Education",
+      "medium": "hindi",
+      "filename": "grade9_environmental_education_hindi.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Environmental_Education",
+      "medium": "urdu",
+      "filename": "grade9_environmental_education_urdu.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Sanskrit_First_Language",
+      "medium": "sanskrit",
+      "filename": "grade9_sanskrit_first_language.pdf"
+    },
+    {
+      "grade": 9,
+      "subject": "Urdu",
+      "medium": "urdu",
+      "filename": "grade9_urdu.pdf"
+    },
+    {
+      "grade": 10,
+      "subject": "Mathematics",
+      "medium": "telugu",
+      "filename": "grade10_mathematics_telugu.pdf"
+    },
+    {
+      "grade": 10,
+      "subject": "Physical_Science",
+      "medium": "telugu",
+      "filename": "grade10_physical_science_telugu.pdf"
+    },
+    {
+      "grade": 10,
+      "subject": "Biological_Science",
+      "medium": "telugu",
+      "filename": "grade10_biological_science_telugu.pdf"
+    },
+    {
+      "grade": 10,
+      "subject": "Social_Studies",
+      "medium": "telugu",
+      "filename": "grade10_social_studies_telugu.pdf"
+    },
+    {
+      "grade": 10,
+      "subject": "Environmental_Education",
+      "medium": "telugu",
+      "filename": "grade10_environmental_education_telugu.pdf"
+    }
+  ]
+}
