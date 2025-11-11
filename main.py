@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
-from routers import auth, teacher, student, modules, assessments, submissions, outcomes, performance, tracking, courses, admin, career_progression, ai_tutor, materials, growth_plan, knowledge_tracking
+from routers import auth, teacher, student, modules, assessments, submissions, outcomes, performance, tracking, courses, admin, career_progression, ai_tutor, materials, growth_plan, knowledge_tracking, progress
 from security import get_current_user, require_role
 from models import User
 from models_cpd import CPDCourse, TeacherCourseRecommendation, TeacherCourseProgress
@@ -67,6 +67,7 @@ app.include_router(ai_tutor.router)  # NEW: AI Tutor
 app.include_router(materials.router, prefix="/api")  # NEW: Teaching Materials Upload
 app.include_router(growth_plan.router, prefix="/api")  # NEW: Enhanced Growth Plan
 app.include_router(knowledge_tracking.router)  # NEW: Knowledge Assessment Tracking
+app.include_router(progress.router, prefix="/api")  # NEW: Progress Analytics Dashboard
 
 @app.get("/")
 def root():
