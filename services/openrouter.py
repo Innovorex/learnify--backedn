@@ -6,10 +6,82 @@ from .curriculum_data import curriculum_service
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-8b-instruct:free") # Default to a common OpenRouter model
 
+# Fallback AI configuration - Claude Haiku via OpenRouter
+FALLBACK_MODEL = os.getenv("AI_TUTOR_FALLBACK_MODEL", "anthropic/claude-3.5-haiku")
+OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+
+def generate_with_claude_haiku(prompt_text: str, max_retries: int = 2):
+    """
+    Fallback to Claude Haiku via OpenRouter when free tier fails or rate limited.
+    Claude Haiku is a paid tier model with higher rate limits and better reliability.
+    Returns the AI response content or error message.
+    """
+    if not OPENROUTER_API_KEY:
+        return "Error: OpenRouter API key not configured"
+
+    print(f"[CLAUDE HAIKU] Using fallback AI provider: {FALLBACK_MODEL}")
+    print(f"[CLAUDE HAIKU] This is a paid tier model with better rate limits")
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "HTTP-Referer": "https://openrouter.ai/",
+        "X-Title": "TeacherApp AI Assessment Generator",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": FALLBACK_MODEL,
+        "messages": [
+            {"role": "system", "content": "You are an AI question generator for teachers. Generate questions in valid JSON format only."},
+            {"role": "user", "content": prompt_text}
+        ],
+        "max_tokens": 4000,
+        "temperature": 0.7
+    }
+
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(
+                f"{OPENROUTER_BASE_URL}/chat/completions",
+                headers=headers,
+                json=data,
+                timeout=120
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                print(f"[CLAUDE HAIKU] Successfully generated response")
+                return result["choices"][0]["message"]["content"]
+            elif response.status_code == 429:
+                # Even Claude Haiku can be rate limited, but much less likely
+                wait_time = (attempt + 1) * 3
+                print(f"[CLAUDE HAIKU] Rate limit hit. Waiting {wait_time}s before retry {attempt + 1}/{max_retries}...")
+                time.sleep(wait_time)
+                continue
+            else:
+                print(f"[CLAUDE HAIKU] Error {response.status_code}: {response.text}")
+                if attempt < max_retries - 1:
+                    wait_time = (attempt + 1) * 2
+                    print(f"[CLAUDE HAIKU] Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                return f"Error {response.status_code}: {response.text}"
+        except Exception as e:
+            print(f"[CLAUDE HAIKU] Exception: {str(e)}")
+            if attempt < max_retries - 1:
+                wait_time = (attempt + 1) * 2
+                print(f"[CLAUDE HAIKU] Retrying in {wait_time}s...")
+                time.sleep(wait_time)
+                continue
+            return f"Exception: {str(e)}"
+
+    return "Error: Maximum retries exceeded for Claude Haiku"
+
 def generate_subject_knowledge_questions_ai_requests(prompt_text: str, max_retries: int = 3):
     """
     Generate subject knowledge questions via OpenRouter API using requests.
     Includes retry logic with exponential backoff for rate limits.
+    Falls back to Garuda AI if OpenRouter fails.
     """
     api_key_for_call = OPENROUTER_API_KEY
     model_for_call = OPENROUTER_MODEL
@@ -47,6 +119,11 @@ def generate_subject_knowledge_questions_ai_requests(prompt_text: str, max_retri
                 time.sleep(wait_time)
                 continue
             else:
+                print(f"[OPENROUTER] Error {response.status_code}: {response.text}")
+                # Try Claude Haiku on non-rate-limit errors
+                if attempt == max_retries - 1:
+                    print("[FALLBACK] Switching to Claude Haiku due to OpenRouter error")
+                    return generate_with_claude_haiku(prompt_text)
                 return f"Error {response.status_code}: {response.text}"
         except Exception as e:
             if attempt < max_retries - 1:
@@ -54,9 +131,14 @@ def generate_subject_knowledge_questions_ai_requests(prompt_text: str, max_retri
                 print(f"[ERROR] API call failed: {str(e)}. Retrying in {wait_time}s...")
                 time.sleep(wait_time)
                 continue
-            return f"Exception while contacting OpenRouter: {str(e)}"
+            else:
+                # Final attempt failed, try Claude Haiku
+                print(f"[FALLBACK] All OpenRouter attempts failed. Switching to Claude Haiku")
+                return generate_with_claude_haiku(prompt_text)
 
-    return "Error: Maximum retries exceeded due to rate limiting"
+    # All retries exhausted due to rate limiting - use Claude Haiku
+    print("[FALLBACK] Rate limit exceeded. Switching to Claude Haiku")
+    return generate_with_claude_haiku(prompt_text)
 
 def _format_curriculum_context(curriculum_data: dict, board: str, subject: str, grade: str) -> str:
     """Format curriculum data for prompt context"""

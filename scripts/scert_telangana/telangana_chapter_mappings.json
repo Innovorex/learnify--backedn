@@ -1,0 +1,88 @@
+{
+  "grade6_english.pdf": {
+    "total_pages": 154,
+    "chapters": [
+      {"number": 1, "title": "Readiness Programme", "start_page": 1, "end_page": 3},
+      {"number": 2, "title": "Peace and Harmony", "start_page": 4, "end_page": 18},
+      {"number": 3, "title": "Telangana, The Pride of the People", "start_page": 19, "end_page": 30},
+      {"number": 4, "title": "What Can a Dollar and Eleven Cents Do?", "start_page": 31, "end_page": 47},
+      {"number": 5, "title": "An Adventure", "start_page": 48, "end_page": 60},
+      {"number": 6, "title": "Plant a Tree", "start_page": 61, "end_page": 76},
+      {"number": 7, "title": "Rip Van Winkle", "start_page": 77, "end_page": 90},
+      {"number": 8, "title": "P.T.Usha, the Golden Girl", "start_page": 91, "end_page": 108},
+      {"number": 9, "title": "Half the Price", "start_page": 109, "end_page": 127}
+    ]
+  },
+  "grade7_english.pdf": {
+    "total_pages": 162,
+    "chapters": [
+      {"number": 1, "title": "The Town Mouse and the Country Mouse", "start_page": 1, "end_page": 22},
+      {"number": 2, "title": "C.V.Raman, the Pride of India", "start_page": 23, "end_page": 39},
+      {"number": 3, "title": "Puru, the Brave", "start_page": 40, "end_page": 56}
+    ]
+  },
+  "grade8_english.pdf": {
+    "total_pages": 162,
+    "chapters": [
+      {"number": 1, "title": "The Tattered Blanket", "start_page": 1, "end_page": 14},
+      {"number": 2, "title": "Oliver Asks for More", "start_page": 15, "end_page": 30},
+      {"number": 3, "title": "The Selfish Giant", "start_page": 31, "end_page": 48},
+      {"number": 4, "title": "The Fun They Had", "start_page": 49, "end_page": 68}
+    ]
+  },
+  "grade9_english.pdf": {
+    "total_pages": 194,
+    "chapters": [
+      {"number": 1, "title": "The Snake and the Mirror", "start_page": 1, "end_page": 24},
+      {"number": 2, "title": "True Height", "start_page": 25, "end_page": 44},
+      {"number": 3, "title": "Swami Is Expelled from School", "start_page": 45, "end_page": 64},
+      {"number": 4, "title": "What Is Man Without the Beasts?", "start_page": 65, "end_page": 86}
+    ]
+  },
+  "grade10_biological_science_english.pdf": {
+    "total_pages": 242,
+    "chapters": [
+      {"number": 1, "title": "Nutrition", "start_page": 1, "end_page": 23},
+      {"number": 2, "title": "Respiration", "start_page": 24, "end_page": 47},
+      {"number": 3, "title": "Transportation", "start_page": 48, "end_page": 73},
+      {"number": 4, "title": "Excretion", "start_page": 74, "end_page": 95}
+    ]
+  },
+  "grade9_environmental_education_english.pdf": {
+    "total_pages": 90,
+    "chapters": [
+      {"number": 1, "title": "Rain water harvesting", "start_page": 1, "end_page": 2},
+      {"number": 2, "title": "Exploring local artisans", "start_page": 3, "end_page": 4},
+      {"number": 3, "title": "Re use plastic and other waste material", "start_page": 5, "end_page": 6},
+      {"number": 4, "title": "Reducing wastage of cooked food", "start_page": 7, "end_page": 8},
+      {"number": 5, "title": "Wastage of water due to negligence", "start_page": 9, "end_page": 10},
+      {"number": 6, "title": "Preventing wastage of electricity", "start_page": 11, "end_page": 16},
+      {"number": 7, "title": "Locally available medicinal plants", "start_page": 17, "end_page": 18},
+      {"number": 8, "title": "Alternate croping", "start_page": 19, "end_page": 20},
+      {"number": 9, "title": "Water supply and waste-water disposal systems in the past", "start_page": 21, "end_page": 22},
+      {"number": 10, "title": "Rainfall and soil erosion in the mountain region", "start_page": 23, "end_page": 24},
+      {"number": 11, "title": "Service providers in our village", "start_page": 25, "end_page": 26},
+      {"number": 12, "title": "Our rural life", "start_page": 27, "end_page": 28},
+      {"number": 13, "title": "Availability of food for all", "start_page": 29, "end_page": 30},
+      {"number": 14, "title": "Our people are our resources", "start_page": 31, "end_page": 32},
+      {"number": 15, "title": "Modern Agriculture and its impact on environment", "start_page": 33, "end_page": 34},
+      {"number": 16, "title": "Lifestyles of people in different regions of India", "start_page": 35, "end_page": 40}
+    ]
+  },
+  "grade10_environmental_education_english.pdf": {
+    "total_pages": 66,
+    "chapters": [
+      {"number": 1, "title": "Global warming", "start_page": 1, "end_page": 2},
+      {"number": 2, "title": "Saviours of our environment", "start_page": 3, "end_page": 4},
+      {"number": 3, "title": "Estimation of particulate pollutants in air", "start_page": 5, "end_page": 6},
+      {"number": 4, "title": "Vaccination - A shield", "start_page": 7, "end_page": 8},
+      {"number": 5, "title": "Mosquitoes - woes", "start_page": 9, "end_page": 10},
+      {"number": 6, "title": "Fossil fuels", "start_page": 11, "end_page": 13},
+      {"number": 7, "title": "Changes in surroundings and their effect", "start_page": 14, "end_page": 15},
+      {"number": 8, "title": "Use solar energy - Save electricity", "start_page": 16, "end_page": 17},
+      {"number": 9, "title": "Pollination - an interaction of plants and insects", "start_page": 18, "end_page": 19},
+      {"number": 10, "title": "Observing 4 'R's", "start_page": 20, "end_page": 21},
+      {"number": 11, "title": "Conserving natural resources", "start_page": 22, "end_page": 25}
+    ]
+  }
+}

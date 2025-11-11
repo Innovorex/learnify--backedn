@@ -1,310 +1,143 @@
-INFO:     Started server process [1328898]
+INFO:     Started server process [1174640]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+🔑 Garuda AI Key Loaded: ✔️
+🔑 Garuda API Key (first 20 chars): sk-garuda-55080226fe...
+🤖 Garuda Model: llama3.2:3b
 🔑 OpenRouter Key Loaded: ✔️
-INFO:     127.0.0.1:44036 - "GET /docs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57574 - "GET /docs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58026 - "GET /assessment/ HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:58104 - "GET /openapi.json HTTP/1.1" 200 OK
-INFO:     127.0.0.1:35384 - "GET /docs HTTP/1.1" 200 OK
-INFO:     103.102.87.220:52667 - "OPTIONS /assessment/generate/1 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:54065 - "OPTIONS /assessment/generate/1 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:57096 - "POST /assessment/generate/1 HTTP/1.1" 401 Unauthorized
-INFO:     103.102.87.220:54065 - "POST /assessment/generate/1 HTTP/1.1" 401 Unauthorized
-INFO:     103.102.87.220:57096 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:57096 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:50581 - "OPTIONS /me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:54645 - "OPTIONS /me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:54645 - "GET /me HTTP/1.1" 401 Unauthorized
-INFO:     103.102.87.220:54645 - "GET /me HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:37450 - "GET /admin/dashboard/metrics HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:37456 - "GET /admin/dashboard/metrics HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:37462 - "GET /admin/teachers HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:37464 - "GET /admin/stats HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:37470 - "GET /admin/courses/analytics HTTP/1.1" 401 Unauthorized
-INFO:     103.102.87.220:61556 - "OPTIONS /auth/login HTTP/1.1" 200 OK
-INFO:     103.102.87.220:63061 - "POST /auth/login HTTP/1.1" 200 OK
-INFO:     103.102.87.220:63061 - "OPTIONS /teacher/profile/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:63061 - "GET /teacher/profile/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:61556 - "OPTIONS /performance/summary/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:63061 - "OPTIONS /performance/summary/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:37552 - "GET /courses/recommendations HTTP/1.1" 200 OK
-INFO:     103.102.87.220:61556 - "GET /performance/summary/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:37558 - "GET /courses/recommendations HTTP/1.1" 200 OK
-INFO:     103.102.87.220:61556 - "GET /performance/summary/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:64743 - "OPTIONS /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:62780 - "OPTIONS /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:62780 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:62780 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:62780 - "OPTIONS /assessment/generate/1 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:64743 - "OPTIONS /assessment/generate/1 HTTP/1.1" 200 OK
-[AI AGENT] Generating 10 mixed difficulty questions in 1 API call: State=Telangana, Board=CBSE
-[AI] Generating mixed difficulty questions for Telangana CBSE Maths Grade 5-7
-[CACHE HIT] Using cached syllabus for Telangana/CBSE/5-7/Maths
-[SYLLABUS] Using real curriculum with 2 units
-[DELAY] Waiting 3s before question generation to avoid rate limits...
-[AI AGENT] Generating 10 mixed difficulty questions in 1 API call: State=Telangana, Board=CBSE
-[AI] Generating mixed difficulty questions for Telangana CBSE Maths Grade 5-7
-[CACHE HIT] Using cached syllabus for Telangana/CBSE/5-7/Maths
-[SYLLABUS] Using real curriculum with 2 units
-[DELAY] Waiting 3s before question generation to avoid rate limits...
-[RATE LIMIT] Attempt 1/3 - Waiting 5s before retry...
-[RATE LIMIT] Attempt 1/3 - Waiting 5s before retry...
-[RATE LIMIT] Attempt 2/3 - Waiting 10s before retry...
-[RATE LIMIT] Attempt 2/3 - Waiting 10s before retry...
-[ERROR] Rate limit exceeded after 3 attempts
-[FALLBACK] Using AI fallback without syllabus
-[FALLBACK AI] Generating mixed Maths questions for grade 5-7 without syllabus
-[ERROR] Rate limit exceeded after 3 attempts
-[FALLBACK] Using AI fallback without syllabus
-[FALLBACK AI] Generating mixed Maths questions for grade 5-7 without syllabus
-[FALLBACK AI] Successfully generated 10 questions
-[DEBUG] Generated total questions: 10
-[DEBUG] Successfully saved 10 questions to database
-INFO:     103.102.87.220:55783 - "POST /assessment/generate/1 HTTP/1.1" 200 OK
-[FALLBACK AI] Successfully generated 10 questions
-[DEBUG] Generated total questions: 10
-[DEBUG] Successfully saved 10 questions to database
-INFO:     103.102.87.220:64743 - "POST /assessment/generate/1 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:57815 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:57815 - "GET /modules/ HTTP/1.1" 200 OK
-[AI AGENT] Generating 10 mixed difficulty questions in 1 API call: State=Telangana, Board=CBSE
-[AI] Generating mixed difficulty questions for Telangana CBSE Maths Grade 5-7
-[CACHE HIT] Using cached syllabus for Telangana/CBSE/5-7/Maths
-[SYLLABUS] Using real curriculum with 2 units
-[DELAY] Waiting 3s before question generation to avoid rate limits...
-[AI AGENT] Generating 10 mixed difficulty questions in 1 API call: State=Telangana, Board=CBSE
-[AI] Generating mixed difficulty questions for Telangana CBSE Maths Grade 5-7
-[CACHE HIT] Using cached syllabus for Telangana/CBSE/5-7/Maths
-[SYLLABUS] Using real curriculum with 2 units
-[DELAY] Waiting 3s before question generation to avoid rate limits...
-[RATE LIMIT] Attempt 1/3 - Waiting 5s before retry...
-[RATE LIMIT] Attempt 1/3 - Waiting 5s before retry...
-[RATE LIMIT] Attempt 2/3 - Waiting 10s before retry...
-[RATE LIMIT] Attempt 2/3 - Waiting 10s before retry...
-[ERROR] Rate limit exceeded after 3 attempts
-[FALLBACK] Using AI fallback without syllabus
-[FALLBACK AI] Generating mixed Maths questions for grade 5-7 without syllabus
-[ERROR] Rate limit exceeded after 3 attempts
-[FALLBACK] Using AI fallback without syllabus
-[FALLBACK AI] Generating mixed Maths questions for grade 5-7 without syllabus
-[FALLBACK AI] Successfully generated 10 questions
-[DEBUG] Generated total questions: 10
-[DEBUG] Successfully saved 10 questions to database
-INFO:     103.102.87.220:60513 - "POST /assessment/generate/1 HTTP/1.1" 200 OK
-[FALLBACK AI] Successfully generated 10 questions
-[DEBUG] Generated total questions: 10
-[DEBUG] Successfully saved 10 questions to database
-INFO:     103.102.87.220:52650 - "POST /assessment/generate/1 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:59586 - "OPTIONS /assessment/submit/1 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:59009 - "POST /assessment/submit/1 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:57339 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:57339 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:57339 - "OPTIONS /assessment/generate/2 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:57339 - "OPTIONS /assessment/generate/2 HTTP/1.1" 200 OK
-[AI AGENT] Generating 10 mixed difficulty questions in 1 API call: State=Telangana, Board=CBSE
-[AI AGENT] Generating 10 mixed difficulty questions in 1 API call: State=Telangana, Board=CBSE
-INFO:     103.102.87.220:51622 - "POST /assessment/generate/2 HTTP/1.1" 500 Internal Server Error
-ERROR:    Exception in ASGI application
-Traceback (most recent call last):
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 401, in run_asgi
-    result = await app(  # type: ignore[func-returns-value]
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 70, in __call__
-    return await self.app(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
-    await super().__call__(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 187, in __call__
-    raise exc
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
-    await self.app(scope, receive, _send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 93, in __call__
-    await self.simple_response(scope, receive, send, request_headers=headers)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 144, in simple_response
-    await self.app(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
-    raise exc
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
-    await app(scope, receive, sender)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
-    await route.handle(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
-    await self.app(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
-    raise exc
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
-    await app(scope, receive, sender)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
-    raw_response = await run_endpoint_function(
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
-    return await dependant.call(**values)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/routers/assessments.py", line 42, in generate_assessment
-    questions = await generate_mcqs(
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/services/openrouter.py", line 882, in generate_mcqs
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/httpx/_models.py", line 763, in raise_for_status
-    raise HTTPStatusError(message, request=request, response=self)
-httpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://openrouter.ai/api/v1/chat/completions'
-For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
-INFO:     103.102.87.220:53246 - "POST /assessment/generate/2 HTTP/1.1" 500 Internal Server Error
-ERROR:    Exception in ASGI application
-Traceback (most recent call last):
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 401, in run_asgi
-    result = await app(  # type: ignore[func-returns-value]
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 70, in __call__
-    return await self.app(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
-    await super().__call__(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 187, in __call__
-    raise exc
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 165, in __call__
-    await self.app(scope, receive, _send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 93, in __call__
-    await self.simple_response(scope, receive, send, request_headers=headers)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 144, in simple_response
-    await self.app(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 62, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
-    raise exc
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
-    await app(scope, receive, sender)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 715, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 735, in app
-    await route.handle(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 288, in handle
-    await self.app(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 76, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 62, in wrapped_app
-    raise exc
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 51, in wrapped_app
-    await app(scope, receive, sender)
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/starlette/routing.py", line 73, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 301, in app
-    raw_response = await run_endpoint_function(
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/fastapi/routing.py", line 212, in run_endpoint_function
-    return await dependant.call(**values)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/routers/assessments.py", line 42, in generate_assessment
-    questions = await generate_mcqs(
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/home/hub_ai/teacher/backend/services/openrouter.py", line 882, in generate_mcqs
-  File "/home/hub_ai/teacher/backend/venv/lib/python3.12/site-packages/httpx/_models.py", line 763, in raise_for_status
-    raise HTTPStatusError(message, request=request, response=self)
-httpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://openrouter.ai/api/v1/chat/completions'
-For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429
-INFO:     103.102.87.220:57339 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:57339 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     Started server process [1532160]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+🔑 OpenRouter API Key (first 20 chars): sk-or-v1-de5352661d6...
+🤖 OpenRouter Model: anthropic/claude-3.5-haiku
+🤖 AI Tutor Fallback Model: anthropic/claude-3.5-haiku
+[RAG RETRIEVAL] Connected to collection 'ignou_pedagogy'
+[RAG RETRIEVAL] Collection has 817 documents
+[AI TUTOR] Garuda AI initialized successfully
 🔑 OpenRouter Key Loaded: ✔️
-INFO:     103.102.87.220:36660 - "OPTIONS /auth/login HTTP/1.1" 200 OK
-INFO:     103.102.87.220:36660 - "POST /auth/login HTTP/1.1" 401 Unauthorized
-INFO:     103.102.87.220:36664 - "POST /auth/login HTTP/1.1" 200 OK
-INFO:     103.102.87.220:36664 - "OPTIONS /teacher/profile/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:36664 - "GET /teacher/profile/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:36664 - "OPTIONS /performance/summary/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:36664 - "OPTIONS /performance/summary/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:33846 - "GET /performance/summary/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56726 - "GET /courses/recommendations HTTP/1.1" 200 OK
-INFO:     103.102.87.220:33846 - "GET /performance/summary/me HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56732 - "GET /courses/recommendations HTTP/1.1" 200 OK
-INFO:     103.102.87.220:33862 - "OPTIONS /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:56096 - "OPTIONS /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:33862 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:56096 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:45902 - "OPTIONS /assessment/generate/1 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:45898 - "OPTIONS /assessment/generate/1 HTTP/1.1" 200 OK
-[AI AGENT] Generating 10 mixed difficulty questions in 1 API call: State=Telangana, Board=CBSE
-[AI] Generating mixed difficulty questions for Telangana CBSE Maths Grade 5-7
-[CACHE HIT] Using cached syllabus for Telangana/CBSE/5-7/Maths
-[SYLLABUS] Using real curriculum with 2 units
-[DELAY] Waiting 3s before question generation to avoid rate limits...
-[AI AGENT] Generating 10 mixed difficulty questions in 1 API call: State=Telangana, Board=CBSE
-[AI] Generating mixed difficulty questions for Telangana CBSE Maths Grade 5-7
-[CACHE HIT] Using cached syllabus for Telangana/CBSE/5-7/Maths
-[SYLLABUS] Using real curriculum with 2 units
-[DELAY] Waiting 3s before question generation to avoid rate limits...
-DEBUG: API Call - OPENROUTER_API_KEY (first 15 chars): sk-or-v1-9859b8...
-DEBUG: API Call - OPENROUTER_MODEL: meta-llama/llama-3.3-8b-instruct:free
-[AI] Successfully generated 10 questions for Maths
-[DEBUG] Returning 10 valid questions
-[DEBUG] Generated total questions: 10
-[DEBUG] Successfully saved 10 questions to database
-DEBUG: API Call - OPENROUTER_API_KEY (first 15 chars): sk-or-v1-9859b8...
-DEBUG: API Call - OPENROUTER_MODEL: meta-llama/llama-3.3-8b-instruct:free
-[AI] Successfully generated 10 questions for Maths
-[DEBUG] Returning 10 valid questions
-[DEBUG] Generated total questions: 10
-[DEBUG] Successfully saved 10 questions to database
-INFO:     103.102.87.220:45902 - "POST /assessment/generate/1 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:45898 - "POST /assessment/generate/1 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:57064 - "GET /teacher/profile/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:59842 - "OPTIONS /assessment/submit/1 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:59842 - "POST /assessment/submit/1 HTTP/1.1" 200 OK
-INFO:     103.102.87.220:56632 - "GET /performance/summary/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:56640 - "GET /performance/summary/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:56640 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:56632 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58108 - "GET /courses/catalog HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58112 - "GET /courses/catalog HTTP/1.1" 200 OK
-INFO:     103.102.87.220:23182 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:37776 - "GET /modules/ HTTP/1.1" 200 OK
-INFO:     103.102.87.220:58742 - "OPTIONS /performance/growth-plan/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:58758 - "OPTIONS /performance/growth-plan/me HTTP/1.1" 200 OK
-DEBUG: API Call - OPENROUTER_API_KEY (first 15 chars): sk-or-v1-9859b8...
-DEBUG: API Call - OPENROUTER_MODEL: meta-llama/llama-3.3-8b-instruct:free
-INFO:     103.102.87.220:58774 - "OPTIONS /tracking/teacher/me/progress HTTP/1.1" 200 OK
-INFO:     103.102.87.220:58776 - "OPTIONS /tracking/teacher/me/progress HTTP/1.1" 200 OK
-INFO:     103.102.87.220:58758 - "POST /performance/growth-plan/me HTTP/1.1" 200 OK
-DEBUG: API Call - OPENROUTER_API_KEY (first 15 chars): sk-or-v1-9859b8...
-DEBUG: API Call - OPENROUTER_MODEL: meta-llama/llama-3.3-8b-instruct:free
-INFO:     103.102.87.220:58742 - "POST /performance/growth-plan/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:58758 - "GET /tracking/teacher/me/progress HTTP/1.1" 200 OK
-INFO:     103.102.87.220:58764 - "GET /performance/summary/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:58764 - "GET /tracking/teacher/me/progress HTTP/1.1" 200 OK
-INFO:     103.102.87.220:58742 - "GET /performance/summary/me HTTP/1.1" 200 OK
-DEBUG: API Call - OPENROUTER_API_KEY (first 15 chars): sk-or-v1-9859b8...
-DEBUG: API Call - OPENROUTER_MODEL: meta-llama/llama-3.3-8b-instruct:free
-INFO:     103.102.87.220:53944 - "POST /performance/growth-plan/me HTTP/1.1" 200 OK
-DEBUG: API Call - OPENROUTER_API_KEY (first 15 chars): sk-or-v1-9859b8...
-DEBUG: API Call - OPENROUTER_MODEL: meta-llama/llama-3.3-8b-instruct:free
-INFO:     103.102.87.220:53956 - "POST /performance/growth-plan/me HTTP/1.1" 200 OK
-INFO:     103.102.87.220:50618 - "POST /auth/login HTTP/1.1" 401 Unauthorized
-INFO:     103.102.87.220:50630 - "POST /auth/login HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60554 - "GET /admin/dashboard/metrics HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60566 - "GET /admin/dashboard/metrics HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60570 - "GET /admin/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60574 - "GET /admin/teachers HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60578 - "GET /admin/courses/analytics HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60584 - "GET /admin/stats HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60592 - "GET /admin/teachers HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60596 - "GET /admin/courses/analytics HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60738 - "GET /admin/teachers HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60742 - "GET /admin/teachers HTTP/1.1" 200 OK
+🔑 Using API Key (first 20 chars): sk-or-v1-de5352661d6...
+INFO:     103.102.87.220:0 - "POST /assessment/tracking/check-eligibility/1 HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "POST /assessment/tracking/start/1 HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "OPTIONS /assessment/generate-with-session/1/66 HTTP/1.1" 200 OK
+[ENHANCED MODULE 1] Using Bloom's taxonomy generator
+
+[ENHANCED MODULE 1] Generating 8 questions for teachers
+[PROFILE] Grades: 7-9, Subjects: Maths, Board: CBSE, State: Telangana
+[BOARD MAPPING] CBSE + Telangana → CBSE
+[FETCHING] CBSE Grade 7 Mathematics syllabus...
+  ✓ Found 15 topics
+[FETCHING] CBSE Grade 8 Mathematics syllabus...
+  ✓ Found 16 topics
+[FETCHING] CBSE Grade 9 Mathematics syllabus...
+  ✓ Found 6 topics
+
+[TOTAL] Collected 37 syllabus topics across all grades/subjects
+[GENERATING] 8 HARD questions from syllabus in parallel...
+
+[PARALLEL] Generating all 8 questions simultaneously...
+[1/8] ✓
+[2/8] ✓
+[3/8] ✓
+[4/8] ✓
+[5/8] ✓
+[6/8] ✓
+[7/8] ✓
+[8/8] ✓
+
+[SUCCESS] Generated 8/8 HARD questions
+
+INFO:     103.102.87.220:0 - "POST /assessment/generate-with-session/1/66 HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "OPTIONS /assessment/submit-enhanced/1 HTTP/1.1" 200 OK
+[PHASE 3] Generating AI feedback...
+[AI FEEDBACK] Generating feedback for 8 questions in parallel...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ Generated feedback for 8 questions
+[PHASE 3] ✓ AI feedback generated for 8 questions
+INFO:     103.102.87.220:0 - "POST /assessment/submit-enhanced/1 HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "OPTIONS /performance/summary/me HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "GET /performance/summary/me HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "OPTIONS /api/career-progression/recommend HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "GET /api/career-progression/recommend HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "OPTIONS /api/career-progression/my-courses HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "GET /api/career-progression/my-courses HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "OPTIONS /modules/ HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "GET /modules/ HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "OPTIONS /assessment/tracking/overview HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "GET /assessment/tracking/overview HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "OPTIONS /assessment/tracking/check-eligibility/2 HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "POST /assessment/tracking/check-eligibility/2 HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "OPTIONS /assessment/tracking/start/2 HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "POST /assessment/tracking/start/2 HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "OPTIONS /assessment/generate-with-session/2/67 HTTP/1.1" 200 OK
+[AI AGENT] Generating 8 mixed difficulty questions
+DEBUG: API Call - OPENROUTER_API_KEY (first 15 chars): sk-or-v1-de5352...
+DEBUG: API Call - OPENROUTER_MODEL: anthropic/claude-3.5-haiku
+INFO:     103.102.87.220:0 - "POST /assessment/generate-with-session/2/67 HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "OPTIONS /assessment/submit-enhanced/2 HTTP/1.1" 200 OK
+[PHASE 3] Generating AI feedback...
+[AI FEEDBACK] Generating feedback for 7 questions in parallel...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[AI FEEDBACK] Trying Garuda AI...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[GARUDA] Exception: ConnectError: [Errno -2] Name or service not known
+[AI FEEDBACK] Garuda failed, trying OpenRouter fallback...
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ OpenRouter success
+[AI FEEDBACK] ✓ Generated feedback for 7 questions
+[PHASE 3] ✓ AI feedback generated for 7 questions
+INFO:     103.102.87.220:0 - "POST /assessment/submit-enhanced/2 HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "GET /performance/summary/me HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "GET /api/career-progression/recommend HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "GET /api/career-progression/my-courses HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "GET /modules/ HTTP/1.1" 200 OK
+INFO:     103.102.87.220:0 - "GET /assessment/tracking/overview HTTP/1.1" 200 OK
