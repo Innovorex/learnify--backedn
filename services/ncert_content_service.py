@@ -23,14 +23,15 @@ class NCERTContentService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_chapter_content(self, grade: int, subject: str, chapter_name: str) -> Optional[Dict]:
+    def get_chapter_content(self, grade: int, subject: str, chapter_name: str, board: str = "CBSE") -> Optional[Dict]:
         """
-        Get full NCERT textbook content for a specific chapter
+        Get full textbook content for a specific chapter from specific board
 
         Args:
             grade: Integer (1-10)
-            subject: String ("Mathematics", "Science", etc.)
+            subject: String ("Mathematics", "Science", "Telugu First Language", etc.)
             chapter_name: String ("Chemical Reactions and Equations", "Real Numbers", etc.)
+            board: "CBSE" or "TELANGANA" (default: "CBSE")
 
         Returns:
             {
@@ -42,17 +43,23 @@ class NCERTContentService:
                 "definitions": {"Oxidation": "...", "Reduction": "..."},
                 "total_length": 15000,
                 "has_formulas": True,
-                "has_images": True
+                "has_images": True,
+                "board": "CBSE" or "TELANGANA"
             }
 
             None if content not found
         """
 
-        # Query all content pieces for this chapter
+        # Normalize subject name (e.g., "Maths" → "Mathematics")
+        from utils.subject_mapper import normalize_subject_name
+        normalized_subject = normalize_subject_name(subject)
+
+        # Query all content pieces for this chapter from specific board
         contents = self.db.query(NCERTTextbookContent).filter(
             NCERTTextbookContent.grade == grade,
-            NCERTTextbookContent.subject.ilike(f"%{subject}%"),
-            NCERTTextbookContent.chapter_name.ilike(f"%{chapter_name}%")
+            NCERTTextbookContent.subject.ilike(f"%{normalized_subject}%"),
+            NCERTTextbookContent.chapter_name.ilike(f"%{chapter_name}%"),
+            NCERTTextbookContent.board == board  # NEW: Filter by board
         ).all()
 
         if not contents:
@@ -88,7 +95,8 @@ class NCERTContentService:
             "definitions": definitions,
             "total_length": len(cleaned_content),
             "has_formulas": has_formulas,
-            "has_images": has_images
+            "has_images": has_images,
+            "board": board  # NEW: Include board in response
         }
 
     def _clean_content(self, text: str) -> str:
@@ -188,28 +196,40 @@ class NCERTContentService:
 
         return definitions
 
-    def validate_chapter_exists(self, grade: int, subject: str, chapter_name: str) -> bool:
+    def validate_chapter_exists(self, grade: int, subject: str, chapter_name: str, board: str = "CBSE") -> bool:
         """
-        Check if chapter content exists in database
+        Check if chapter content exists in database from specific board
+
+        Args:
+            grade: 1-10
+            subject: Subject name
+            chapter_name: Chapter name
+            board: "CBSE" or "TELANGANA" (default: "CBSE")
 
         Returns:
             True if content exists, False otherwise
         """
+        # Normalize subject name (e.g., "Maths" → "Mathematics")
+        from utils.subject_mapper import normalize_subject_name
+        normalized_subject = normalize_subject_name(subject)
+
         count = self.db.query(NCERTTextbookContent).filter(
             NCERTTextbookContent.grade == grade,
-            NCERTTextbookContent.subject.ilike(f"%{subject}%"),
-            NCERTTextbookContent.chapter_name.ilike(f"%{chapter_name}%")
+            NCERTTextbookContent.subject.ilike(f"%{normalized_subject}%"),
+            NCERTTextbookContent.chapter_name.ilike(f"%{chapter_name}%"),
+            NCERTTextbookContent.board == board  # NEW: Filter by board
         ).count()
 
         return count > 0
 
-    def get_available_chapters(self, grade: int, subject: str) -> List[Dict]:
+    def get_available_chapters(self, grade: int, subject: str, board: str = "CBSE") -> List[Dict]:
         """
-        Get list of available chapters for a subject
+        Get list of available chapters for a subject from specific board
 
         Args:
             grade: 1-10
-            subject: "Mathematics", "Science", etc.
+            subject: "Mathematics", "Science", "Telugu First Language", etc.
+            board: "CBSE" or "TELANGANA" (default: "CBSE")
 
         Returns:
             [
@@ -219,14 +239,19 @@ class NCERTContentService:
             ]
         """
 
-        # Query distinct chapters
+        # Normalize subject name (e.g., "Maths" → "Mathematics")
+        from utils.subject_mapper import normalize_subject_name
+        normalized_subject = normalize_subject_name(subject)
+
+        # Query distinct chapters filtered by board
         results = self.db.query(
             NCERTTextbookContent.chapter_number,
             NCERTTextbookContent.chapter_name,
             func.count(NCERTTextbookContent.id).label('content_pieces')
         ).filter(
             NCERTTextbookContent.grade == grade,
-            NCERTTextbookContent.subject.ilike(f"%{subject}%")
+            NCERTTextbookContent.subject.ilike(f"%{normalized_subject}%"),
+            NCERTTextbookContent.board == board  # NEW: Filter by board
         ).group_by(
             NCERTTextbookContent.chapter_number,
             NCERTTextbookContent.chapter_name
@@ -256,10 +281,14 @@ class NCERTContentService:
             Filtered content related to that topic only
         """
 
+        # Normalize subject name (e.g., "Maths" → "Mathematics")
+        from utils.subject_mapper import normalize_subject_name
+        normalized_subject = normalize_subject_name(subject)
+
         # Query content with specific topic
         contents = self.db.query(NCERTTextbookContent).filter(
             NCERTTextbookContent.grade == grade,
-            NCERTTextbookContent.subject.ilike(f"%{subject}%"),
+            NCERTTextbookContent.subject.ilike(f"%{normalized_subject}%"),
             NCERTTextbookContent.chapter_name.ilike(f"%{chapter_name}%"),
             NCERTTextbookContent.topic_name.ilike(f"%{topic_name}%")
         ).all()

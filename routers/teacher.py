@@ -15,6 +15,46 @@ from services.syllabus_service import get_syllabus_service
 
 router = APIRouter(prefix="/teacher", tags=["teacher"])
 
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+def get_teacher_board(teacher_id: int, db: Session) -> str:
+    """
+    Get teacher's board (normalized to CBSE or TELANGANA)
+
+    This function retrieves the teacher's board affiliation from their profile
+    and normalizes it to database board names.
+
+    Args:
+        teacher_id: The user ID of the teacher
+        db: Database session
+
+    Returns:
+        str: Normalized board name ("CBSE" or "TELANGANA")
+
+    Examples:
+        Teacher with "State Board" → "TELANGANA"
+        Teacher with "CBSE" → "CBSE"
+        Teacher with no profile → "CBSE" (default)
+    """
+    from utils.board_mapper import map_board_to_db
+
+    teacher_profile = db.query(TeacherProfile).filter(
+        TeacherProfile.user_id == teacher_id
+    ).first()
+
+    if teacher_profile and teacher_profile.board:
+        return map_board_to_db(teacher_profile.board)
+
+    return "CBSE"  # Default
+
+
+# ============================================================================
+# Profile Endpoints
+# ============================================================================
+
 @router.post("/profile", response_model=TeacherProfileOut, status_code=201)
 def create_profile(payload: TeacherProfileIn,
                    db: Session = Depends(get_db),
@@ -46,6 +86,75 @@ def get_my_profile(db: Session = Depends(get_db),
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     return profile
+
+
+@router.get("/classes")
+def get_teacher_classes(db: Session = Depends(get_db),
+                       user: User = Depends(require_role("teacher"))):
+    """
+    Get teacher's classes from ERPNext with grades, sections, and subjects
+    Returns: {
+        "classes": ["1", "2"],
+        "sections": ["A", "B"],
+        "subjects": ["Maths", "English"],
+        "class_sections": [{"grade": "1", "section": "A", "subjects": ["Maths", "English"]}]
+    }
+    """
+    from sqlalchemy import text
+
+    result = db.execute(
+        text("""
+            SELECT DISTINCT
+                grade,
+                section,
+                subject
+            FROM erpnext_teacher_classes
+            WHERE teacher_id = :teacher_id
+            ORDER BY grade, section, subject
+        """),
+        {"teacher_id": user.id}
+    )
+
+    rows = result.fetchall()
+
+    if not rows:
+        # Return empty data if no ERPNext classes found
+        return {
+            "classes": [],
+            "sections": [],
+            "subjects": [],
+            "class_sections": []
+        }
+
+    # Extract unique values
+    classes = sorted(list(set(row[0] for row in rows)))
+    sections = sorted(list(set(row[1] for row in rows)))
+    subjects = sorted(list(set(row[2] for row in rows)))
+
+    # Group by grade and section
+    class_sections_dict = {}
+    for row in rows:
+        grade, section, subject = row[0], row[1], row[2]
+        key = f"{grade}_{section}"
+
+        if key not in class_sections_dict:
+            class_sections_dict[key] = {
+                "grade": grade,
+                "section": section,
+                "subjects": []
+            }
+
+        if subject not in class_sections_dict[key]["subjects"]:
+            class_sections_dict[key]["subjects"].append(subject)
+
+    class_sections = list(class_sections_dict.values())
+
+    return {
+        "classes": classes,
+        "sections": sections,
+        "subjects": subjects,
+        "class_sections": class_sections
+    }
 
 
 # ============================================================================
@@ -228,25 +337,42 @@ def get_teacher_k12_summary(teacher_id: int, db: Session = Depends(get_db)):
     return summary
 
 
-# NEW: Get available NCERT chapters for dropdown
+# NEW: Get available NCERT chapters for dropdown (Board-aware)
 @router.get("/ncert/chapters/{grade}/{subject}")
-def get_ncert_chapters(grade: int, subject: str, db: Session = Depends(get_db)):
+def get_ncert_chapters(
+    grade: int,
+    subject: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """
-    Get list of available NCERT chapters for a subject
+    Get list of available NCERT/SCERT chapters for a subject
+    Automatically filters by teacher's board (CBSE or Telangana)
 
     Returns:
-        [
-            {"chapter_number": 1, "chapter_name": "Real Numbers", "available": true, "content_pieces": 5},
-            {"chapter_number": 2, "chapter_name": "Polynomials", "available": true, "content_pieces": 8},
-            ...
-        ]
+        {
+            "board": "CBSE" or "TELANGANA",
+            "board_display": "CBSE" or "Telangana State Board",
+            "chapters": [
+                {"chapter_number": 1, "chapter_name": "Real Numbers", "available": true, "content_pieces": 5},
+                ...
+            ]
+        }
     """
     from services.ncert_content_service import NCERTContentService
+    from utils.board_mapper import map_board_to_display
+
+    # Get teacher's board
+    teacher_board = get_teacher_board(current_user.id, db)
+
     ncert_service = NCERTContentService(db)
+    chapters = ncert_service.get_available_chapters(grade, subject, board=teacher_board)
 
-    chapters = ncert_service.get_available_chapters(grade, subject)
-
-    return chapters
+    return {
+        "board": teacher_board,
+        "board_display": map_board_to_display(teacher_board),
+        "chapters": chapters
+    }
 
 
 # NEW: V2 Endpoint for Multi-Type Question Generation
@@ -304,7 +430,11 @@ def create_assessment_v2(
     if not teacher:
         raise HTTPException(404, "Teacher not found")
 
-    # Validate NCERT content exists
+    # Get teacher's board (CBSE or TELANGANA)
+    teacher_board = get_teacher_board(request.teacher_id, db)
+    print(f"📚 Teacher board: {teacher_board}")
+
+    # Validate NCERT content exists for teacher's board
     from services.ncert_content_service import NCERTContentService
     ncert_service = NCERTContentService(db)
 
@@ -312,13 +442,15 @@ def create_assessment_v2(
     chapter_exists = ncert_service.validate_chapter_exists(
         grade=grade,
         subject=request.subject,
-        chapter_name=request.chapter
+        chapter_name=request.chapter,
+        board=teacher_board  # NEW: Filter by teacher's board
     )
 
     if not chapter_exists:
+        from utils.board_mapper import map_board_to_display
         raise HTTPException(
             400,
-            f"No NCERT content found for Class {grade}, {request.subject}, Chapter: {request.chapter}"
+            f"No {map_board_to_display(teacher_board)} content found for Class {grade}, {request.subject}, Chapter: {request.chapter}"
         )
 
     # Validate question spec
@@ -344,7 +476,8 @@ def create_assessment_v2(
         language=request.language,
         start_time=start_dt.replace(tzinfo=None) if start_dt.tzinfo else start_dt,
         end_time=end_dt.replace(tzinfo=None) if end_dt.tzinfo else end_dt,
-        duration_minutes=request.duration_minutes
+        duration_minutes=request.duration_minutes,
+        board=teacher_board  # NEW: Set board from teacher profile
     )
 
     db.add(new_assessment)
@@ -352,6 +485,7 @@ def create_assessment_v2(
     db.refresh(new_assessment)
 
     print(f"✅ Assessment created: ID {new_assessment.id}")
+    print(f"   Board: {teacher_board}")
     print(f"   Question spec: {request.question_spec}")
 
     # Generate questions in background
@@ -363,6 +497,7 @@ def create_assessment_v2(
         chapter=request.chapter,
         language=request.language,
         question_spec=request.question_spec,
+        board=teacher_board,  # NEW: Pass board to question generation
         db=db
     )
 
@@ -383,10 +518,11 @@ def generate_and_store_k12_questions_v2(
     chapter: str,
     language: str,
     question_spec: dict,
+    board: str,  # NEW: Board parameter
     db: Session
 ):
     """
-    Generate multi-type questions from NCERT content using V2 generator
+    Generate multi-type questions from NCERT/SCERT content using V2 generator
 
     Args:
         assessment_id: ID of the assessment
@@ -395,28 +531,31 @@ def generate_and_store_k12_questions_v2(
         chapter: Chapter name
         language: Language for questions ("English" or "Hindi")
         question_spec: {"multiple_choice": 6, "true_false": 4, ...}
+        board: "CBSE" or "TELANGANA"
         db: Database session
     """
     try:
         print(f"🔄 [V2] Starting question generation for assessment {assessment_id}")
+        print(f"   Board: {board}")
         print(f"   Grade: {grade}, Subject: {subject}, Chapter: {chapter}")
         print(f"   Question spec: {question_spec}")
 
-        # Step 1: Get NCERT content
+        # Step 1: Get NCERT/SCERT content from teacher's board
         from services.ncert_content_service import NCERTContentService
         ncert_service = NCERTContentService(db)
 
         ncert_content = ncert_service.get_chapter_content(
             grade=grade,
             subject=subject,
-            chapter_name=chapter
+            chapter_name=chapter,
+            board=board  # NEW: Filter by board
         )
 
         if not ncert_content:
-            print(f"❌ No NCERT content found")
+            print(f"❌ No {board} content found")
             return
 
-        print(f"✅ Fetched NCERT content ({ncert_content['total_length']} chars)")
+        print(f"✅ Fetched {board} content ({ncert_content['total_length']} chars)")
 
         # Step 2: Generate questions using V2 AI generator
         from services.ai_question_generator_v2 import AIQuestionGeneratorV2

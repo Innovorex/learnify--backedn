@@ -1,253 +1,247 @@
-# routers/student.py - K-12 Student Assessment APIs
 """
-Student endpoints for K-12 assessment system:
-- View available assessments for their class/section
-- Take exams within the time window
-- Submit answers and get scores
-- View past results
+Student API Router
+Handles student-specific endpoints for viewing and taking assessments
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import datetime, timezone, timedelta
+from sqlalchemy import text
+from typing import List, Dict, Any
+from datetime import datetime
 from database import get_db
+from models import User
 from models_k12 import K12Assessment, K12Question, K12Result
-
-# IST timezone (UTC + 5:30)
-IST = timezone(timedelta(hours=5, minutes=30))
+from security import get_current_user, require_role
 
 router = APIRouter(prefix="/student", tags=["student"])
 
-def get_ist_now():
-    """Get current time in IST as naive datetime"""
-    return datetime.now(IST).replace(tzinfo=None)
 
-
-@router.get("/assessments/{class_name}/{section}")
-def get_assessments(class_name: str, section: str, db: Session = Depends(get_db)):
-    """Get all upcoming assessments for a student's class and section"""
-    now = get_ist_now()
-
-    print(f"🔍 Fetching assessments for Class: '{class_name}', Section: '{section}'")
-
-    # Get all active assessments that haven't ended yet
-    data = db.query(K12Assessment).filter(
-        K12Assessment.class_name == class_name,
-        K12Assessment.section == section,
-        K12Assessment.end_time > now
-    ).all()
-
-    print(f"✅ Found {len(data)} active assessments for '{class_name}'-'{section}'")
-
-    return data
-
-
-@router.get("/assessment/{assessment_id}/questions")
-def get_questions(assessment_id: int, db: Session = Depends(get_db)):
-    """Get questions for a specific assessment (only if exam is currently active)"""
-    assessment = db.query(K12Assessment).filter(K12Assessment.id == assessment_id).first()
-    if not assessment:
-        raise HTTPException(status_code=404, detail="Assessment not found")
-
-    # Get current time in IST (naive datetime)
-    now = get_ist_now()
-
-    # Ensure assessment times are naive datetimes
-    start_time = assessment.start_time.replace(tzinfo=None) if assessment.start_time.tzinfo else assessment.start_time
-    end_time = assessment.end_time.replace(tzinfo=None) if assessment.end_time.tzinfo else assessment.end_time
-
-    print(f"🕐 Current IST time: {now}")
-    print(f"📝 Assessment ID {assessment_id}: {start_time} to {end_time} IST")
-
-    # Check if exam is currently active
-    if now < start_time or now > end_time:
+@router.get("/assessments")
+def get_student_assessments(
+    status_filter: str = "all",  # all, upcoming, active, completed
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role("student"))
+):
+    """
+    Get assessments assigned to student's class and section
+    """
+    if not user.class_name or not user.section:
         raise HTTPException(
-            status_code=403,
-            detail=f"Exam not active. Available from {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')} IST"
+            status_code=400,
+            detail="Student class and section not set. Please sync your profile."
         )
 
-    # Fetch questions (don't send correct answers to frontend)
-    questions = db.query(K12Question).filter(K12Question.assessment_id == assessment_id).all()
+    # Base query
+    query = db.query(K12Assessment).filter(
+        K12Assessment.class_name == user.class_name,
+        K12Assessment.section == user.section
+    )
 
-    question_list = []
-    for q in questions:
-        # Build response without correct answers
-        question_response = {
-            "id": q.id,
-            "question": q.question,
-            "question_type": q.question_type,
-            "marks": q.marks
-        }
+    now = datetime.now()
 
-        # Add question data based on type, removing correct answers
-        if q.question_type == 'multiple_choice' or q.question_type == 'multi_select':
-            # Send options but NOT correct_answer/correct_answers
-            if q.question_data and 'options' in q.question_data:
-                question_response['options'] = q.question_data['options']
-            elif q.options:
-                question_response['options'] = q.options
-        elif q.question_type == 'true_false':
-            # No data needed, just the question
-            pass
-        elif q.question_type == 'short_answer':
-            # Send max_words if available
-            if q.question_data and 'max_words' in q.question_data:
-                question_response['max_words'] = q.question_data['max_words']
-        elif q.question_type == 'fill_blank':
-            # No hints, just the question with blanks
-            pass
-        elif q.question_type == 'ordering':
-            # Send items to be ordered
-            if q.question_data and 'items' in q.question_data:
-                question_response['items'] = q.question_data['items']
+    # Apply filter
+    if status_filter == "upcoming":
+        query = query.filter(K12Assessment.start_time > now)
+    elif status_filter == "active":
+        query = query.filter(
+            K12Assessment.start_time <= now,
+            K12Assessment.end_time >= now
+        )
+    elif status_filter == "completed":
+        query = query.filter(K12Assessment.end_time < now)
 
-        question_list.append(question_response)
+    assessments = query.order_by(K12Assessment.start_time.desc()).all()
 
-    # Calculate remaining time based on exam duration (not window end time)
-    # Students get the full duration_minutes when they start the exam
-    time_remaining_seconds = assessment.duration_minutes * 60
+    result = []
+    for assessment in assessments:
+        student_result = db.query(K12Result).filter(
+            K12Result.assessment_id == assessment.id,
+            K12Result.student_id == user.id
+        ).first()
 
-    # Return questions with assessment metadata
-    return {
-        "assessment": {
+        question_count = db.query(K12Question).filter(
+            K12Question.assessment_id == assessment.id
+        ).count()
+
+        if student_result:
+            status_str = "submitted"
+        elif now < assessment.start_time:
+            status_str = "upcoming"
+        elif now > assessment.end_time:
+            status_str = "expired"
+        else:
+            status_str = "active"
+
+        result.append({
             "id": assessment.id,
             "subject": assessment.subject,
             "chapter": assessment.chapter,
+            "class_name": assessment.class_name,
+            "section": assessment.section,
+            "start_time": assessment.start_time.isoformat() if assessment.start_time else None,
+            "end_time": assessment.end_time.isoformat() if assessment.end_time else None,
             "duration_minutes": assessment.duration_minutes,
-            "start_time": start_time.isoformat(),
-            "end_time": end_time.isoformat(),
-            "time_remaining_seconds": time_remaining_seconds
-        },
-        "questions": question_list
+            "question_count": question_count,
+            "status": status_str,
+            "submitted": student_result is not None,
+            "score": student_result.score if student_result else None,
+            "submitted_at": student_result.submitted_at.isoformat() if student_result and student_result.submitted_at else None
+        })
+
+    return result
+
+
+@router.get("/assessments/{assessment_id}")
+def get_assessment_details(
+    assessment_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role("student"))
+):
+    """Get assessment details with questions"""
+    assessment = db.query(K12Assessment).filter(K12Assessment.id == assessment_id).first()
+
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    if assessment.class_name != user.class_name or assessment.section != user.section:
+        raise HTTPException(status_code=403, detail="Not eligible")
+
+    result = db.query(K12Result).filter(
+        K12Result.assessment_id == assessment_id,
+        K12Result.student_id == user.id
+    ).first()
+
+    if result:
+        raise HTTPException(status_code=400, detail="Already submitted")
+
+    now = datetime.now()
+    if now < assessment.start_time:
+        raise HTTPException(status_code=400, detail="Not started yet")
+
+    if now > assessment.end_time:
+        raise HTTPException(status_code=400, detail="Assessment ended")
+
+    questions = db.query(K12Question).filter(
+        K12Question.assessment_id == assessment_id
+    ).order_by(K12Question.id).all()
+
+    return {
+        "id": assessment.id,
+        "subject": assessment.subject,
+        "chapter": assessment.chapter,
+        "start_time": assessment.start_time.isoformat(),
+        "end_time": assessment.end_time.isoformat(),
+        "duration_minutes": assessment.duration_minutes,
+        "questions": [
+            {
+                "id": q.id,
+                "question_text": q.question,
+                "question_type": q.question_type,
+                "options": q.options,
+                "marks": q.marks
+            }
+            for q in questions
+        ]
     }
 
 
-@router.post("/submit-exam")
-def submit_exam(req: dict, db: Session = Depends(get_db)):
-    """Submit exam answers and calculate score"""
-    student_id = req["student_id"]
-    assessment_id = req["assessment_id"]
-    answers = req["answers"]
+@router.post("/assessments/{assessment_id}/submit")
+def submit_assessment(
+    assessment_id: int,
+    submission: Dict[str, Any],
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role("student"))
+):
+    """Submit assessment answers"""
+    assessment = db.query(K12Assessment).filter(K12Assessment.id == assessment_id).first()
 
-    # Check if already submitted
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    if assessment.class_name != user.class_name or assessment.section != user.section:
+        raise HTTPException(status_code=403, detail="Not eligible")
+
     existing = db.query(K12Result).filter(
-        K12Result.student_id == student_id,
-        K12Result.assessment_id == assessment_id
+        K12Result.assessment_id == assessment_id,
+        K12Result.student_id == user.id
     ).first()
 
     if existing:
-        raise HTTPException(status_code=400, detail="You have already submitted this exam")
+        raise HTTPException(status_code=400, detail="Already submitted")
 
-    # Fetch all questions for this assessment
-    questions = db.query(K12Question).filter(K12Question.assessment_id == assessment_id).all()
-    if not questions:
-        raise HTTPException(status_code=404, detail="Questions not found")
+    now = datetime.now()
+    if now > assessment.end_time:
+        raise HTTPException(status_code=400, detail="Assessment ended")
 
-    score = 0
-    total = len(questions)
+    answers = submission.get("answers", {})
+    questions = db.query(K12Question).filter(
+        K12Question.assessment_id == assessment_id
+    ).all()
 
-    # Evaluate answers
-    for q in questions:
-        selected = answers.get(str(q.id)) or answers.get(q.id)
-        if selected and selected == q.correct_answer:
-            score += 1
+    total_marks = sum(q.marks for q in questions)
+    scored_marks = 0
 
-    # Save result
+    for question in questions:
+        student_answer = answers.get(str(question.id), "").strip()
+        correct_answer = question.correct_answer.strip()
+
+        if question.question_type in ["multiple_choice", "true_false", "fill_blank"]:
+            if student_answer.lower() == correct_answer.lower():
+                scored_marks += question.marks
+        elif question.question_type == "multi_select":
+            student_set = set(student_answer.split(",")) if student_answer else set()
+            correct_set = set(correct_answer.split(","))
+            if student_set == correct_set:
+                scored_marks += question.marks
+
+    score = (scored_marks / total_marks * 100) if total_marks > 0 else 0
+
     result = K12Result(
-        student_id=student_id,
         assessment_id=assessment_id,
+        student_id=user.id,
         answers=answers,
-        score=score
+        score=score,
+        submitted_at=datetime.now()
     )
+
     db.add(result)
     db.commit()
 
-    return {"message": "Exam submitted successfully", "score": score, "total": total}
+    return {
+        "success": True,
+        "score": round(score, 2),
+        "scored_marks": scored_marks,
+        "total_marks": total_marks,
+        "message": f"Assessment submitted! Score: {scored_marks}/{total_marks} ({score:.1f}%)"
+    }
 
 
-@router.get("/assessments-with-status/{student_id}/{class_name}/{section}")
-def get_assessments_with_status(student_id: int, class_name: str, section: str, db: Session = Depends(get_db)):
-    """Get all assessments with completion status for a student"""
-    now = get_ist_now()
+@router.get("/results")
+def get_student_results(
+    db: Session = Depends(get_db),
+    user: User = Depends(require_role("student"))
+):
+    """Get all student results"""
+    results = db.query(K12Result).filter(
+        K12Result.student_id == user.id
+    ).order_by(K12Result.submitted_at.desc()).all()
 
-    print(f"🔍 Fetching assessments with status for Student ID: {student_id}, Class: '{class_name}', Section: '{section}'")
-
-    # Get all assessments for this class/section, sorted by start_time descending
-    assessments = db.query(K12Assessment).filter(
-        K12Assessment.class_name == class_name,
-        K12Assessment.section == section
-    ).order_by(K12Assessment.start_time.desc()).all()
-
-    print(f"📚 Found {len(assessments)} total assessments for '{class_name}'-'{section}'")
-
-    output = []
-    for a in assessments:
-        # Check if student has submitted this assessment
-        result = db.query(K12Result).filter(
-            K12Result.student_id == student_id,
-            K12Result.assessment_id == a.id
+    result_list = []
+    for result in results:
+        assessment = db.query(K12Assessment).filter(
+            K12Assessment.id == result.assessment_id
         ).first()
 
-        # Make times timezone-aware for comparison if needed
-        start_time = a.start_time.replace(tzinfo=None) if a.start_time.tzinfo else a.start_time
-        end_time = a.end_time.replace(tzinfo=None) if a.end_time.tzinfo else a.end_time
+        if assessment:
+            result_list.append({
+                "result_id": result.id,
+                "assessment_id": assessment.id,
+                "subject": assessment.subject,
+                "chapter": assessment.chapter,
+                "score": round(result.score, 2),
+                "submitted_at": result.submitted_at.isoformat(),
+                "class_name": assessment.class_name,
+                "section": assessment.section
+            })
 
-        # Determine status
-        if result:
-            status = "completed"
-            score = result.score
-            total_questions = db.query(K12Question).filter(K12Question.assessment_id == a.id).count()
-            submitted_at = result.submitted_at
-        elif now < start_time:
-            status = "scheduled"
-            score = None
-            total_questions = None
-            submitted_at = None
-        elif now >= start_time and now <= end_time:
-            status = "available"
-            score = None
-            total_questions = None
-            submitted_at = None
-        else:  # now > end_time
-            status = "missed"
-            score = None
-            total_questions = None
-            submitted_at = None
-
-        output.append({
-            "id": a.id,
-            "subject": a.subject,
-            "chapter": a.chapter,
-            "start_time": a.start_time,
-            "end_time": a.end_time,
-            "duration_minutes": a.duration_minutes,
-            "status": status,
-            "score": score,
-            "total_questions": total_questions,
-            "submitted_at": submitted_at
-        })
-
-    print(f"✅ Returning {len(output)} assessments with status")
-    return output
-
-
-@router.get("/my-results/{student_id}")
-def get_student_results(student_id: int, db: Session = Depends(get_db)):
-    """Get all past exam results for a student"""
-    results = db.query(K12Result).filter(K12Result.student_id == student_id).all()
-    output = []
-
-    for r in results:
-        a = db.query(K12Assessment).filter(K12Assessment.id == r.assessment_id).first()
-        if not a:
-            continue
-        total_questions = db.query(K12Question).filter(K12Question.assessment_id == a.id).count()
-        output.append({
-            "assessment_id": a.id,
-            "subject": a.subject,
-            "chapter": a.chapter,
-            "score": r.score,
-            "total": total_questions,
-            "submitted_at": r.submitted_at
-        })
-    return output
+    return result_list

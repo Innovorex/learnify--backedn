@@ -220,10 +220,15 @@ async def start_ai_tutor_session(
         ).fetchone()
 
         # Use teacher's board/state if available, otherwise fall back to request
-        teacher_board = teacher_profile[0] if teacher_profile and teacher_profile[0] else request.board
+        raw_board = teacher_profile[0] if teacher_profile and teacher_profile[0] else request.board
         teacher_state = teacher_profile[1] if teacher_profile and teacher_profile[1] else request.state
 
-        print(f"[AI TUTOR] Using board: {teacher_board}, state: {teacher_state} for teacher {teacher_id}")
+        # Normalize board to database format (CBSE or TELANGANA)
+        from utils.board_mapper import map_board_to_db, map_board_to_display
+        teacher_board = map_board_to_db(raw_board)
+        board_display = map_board_to_display(teacher_board)
+
+        print(f"[AI TUTOR] Using board: {teacher_board} ({board_display}), state: {teacher_state} for teacher {teacher_id}")
 
         # Get material info if material_id provided
         material_filename = None

@@ -23,6 +23,13 @@ class User(Base):
     # Student-specific fields (nullable, only for students)
     class_name = Column(String(10), nullable=True)
     section = Column(String(5), nullable=True)
+    roll_number = Column(Integer, nullable=True)
+
+    # ERPNext integration fields
+    erpnext_synced = Column(Boolean, default=False)
+    erpnext_last_sync = Column(DateTime, nullable=True)
+    erpnext_entity_id = Column(String(100), nullable=True)
+    erpnext_student_id = Column(String(255), nullable=True)
 
     created_at = Column(DateTime, server_default=func.now())
 
@@ -42,6 +49,14 @@ class TeacherProfile(Base):
     experience_years = Column(Integer, nullable=False)
     board = Column(String(50), nullable=False)
     state = Column(String(50), nullable=True, default="Telangana")  # State for curriculum fetching
+
+    # ERPNext integration fields
+    erpnext_employee_id = Column(String(100), nullable=True)
+    erpnext_instructor_name = Column(String(200), nullable=True)
+    auto_synced_from_erpnext = Column(Boolean, default=False)
+
+    # Add name field (may not exist in older models)
+    name = Column(String(200), nullable=True)
 
     user = relationship("User", back_populates="profile")
 

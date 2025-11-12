@@ -83,11 +83,16 @@ class AITutorOrchestrator:
         textbook_content = ""
         textbook_fetched = False
 
-        # Step 1A: Try to fetch extracted CBSE textbook content (if board is CBSE and db is available)
-        # IMPORTANT: Only fetch CBSE content if NOT using uploaded material
-        if db and board.upper() in ["CBSE", "NCERT"] and not material_id:
+        # Step 1A: Try to fetch extracted CBSE/Telangana textbook content (if db is available)
+        # IMPORTANT: Only fetch content if NOT using uploaded material
+        # Normalize board value
+        from utils.board_mapper import map_board_to_db
+        normalized_board = map_board_to_db(board)
+
+        if db and normalized_board in ["CBSE", "TELANGANA"] and not material_id:
             try:
-                print(f"[AI TUTOR] Fetching extracted CBSE textbook content for {grade} {subject} - {topic_name}...")
+                board_display = "CBSE" if normalized_board == "CBSE" else "Telangana State Board"
+                print(f"[AI TUTOR] Fetching extracted {board_display} textbook content for {grade} {subject} - {topic_name}...")
                 ncert_service = NCERTContentService(db)
 
                 # Try to convert grade to int
@@ -97,8 +102,8 @@ class AITutorOrchestrator:
                     grade_num = None
 
                 if grade_num:
-                    # Get available chapters for this grade and subject
-                    available_chapters = ncert_service.get_available_chapters(grade_num, subject)
+                    # Get available chapters for this grade and subject from teacher's board
+                    available_chapters = ncert_service.get_available_chapters(grade_num, subject, board=normalized_board)
 
                     if available_chapters:
                         print(f"[AI TUTOR] Found {len(available_chapters)} chapters for Grade {grade_num} {subject}")
@@ -143,11 +148,12 @@ class AITutorOrchestrator:
                                 topic_name=topic_name
                             )
 
-                            # Always get FULL chapter content (no truncation)
+                            # Always get FULL chapter content (no truncation) from teacher's board
                             chapter_data = ncert_service.get_chapter_content(
                                 grade=grade_num,
                                 subject=subject,
-                                chapter_name=best_match_chapter['chapter_name']
+                                chapter_name=best_match_chapter['chapter_name'],
+                                board=normalized_board
                             )
 
                             if chapter_data:

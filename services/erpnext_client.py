@@ -109,68 +109,114 @@ class ERPNextClient:
                 return None
 
     async def get_employee_by_user_id(self, user_id: str) -> Optional[Dict]:
-        """Fetch employee details linked to user"""
+        """Fetch employee details linked to user - iterates through all employees"""
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
+                # Get all employee IDs
                 response = await client.get(
                     f"{self.api_base}/Employee",
-                    headers=self.headers_data,
-                    params={"filters": f'[["user_id","=","{user_id}"]]'}
+                    headers=self.headers_data
                 )
 
                 if response.status_code == 200:
-                    data = response.json().get("data", [])
-                    return data[0] if data else None
+                    employee_list = response.json().get("data", [])
+
+                    # Fetch each employee and check user_id
+                    for emp_item in employee_list:
+                        emp_id = emp_item.get("name")
+                        emp_response = await client.get(
+                            f"{self.api_base}/Employee/{emp_id}",
+                            headers=self.headers_data
+                        )
+
+                        if emp_response.status_code == 200:
+                            employee = emp_response.json().get("data", {})
+                            if employee.get("user_id") == user_id:
+                                return employee
+
                 return None
 
             except Exception as e:
                 logger.error(f"Error fetching employee for user {user_id}: {str(e)}")
                 return None
 
-    async def get_instructor_by_email(self, email: str) -> Optional[Dict]:
-        """Fetch instructor details by email"""
+    async def get_instructor_by_employee_id(self, employee_id: str) -> Optional[Dict]:
+        """Fetch instructor details by employee ID"""
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
-                # First try to get instructor by email
+                # Get all instructors
                 response = await client.get(
                     f"{self.api_base}/Instructor",
-                    headers=self.headers_data,
-                    params={"filters": f'[["email","=","{email}"]]'}
+                    headers=self.headers_data
                 )
 
                 if response.status_code == 200:
-                    data = response.json().get("data", [])
-                    if data:
-                        instructor_name = data[0].get("name")
-                        # Fetch full instructor details
-                        detail_response = await client.get(
-                            f"{self.api_base}/Instructor/{instructor_name}",
+                    instructor_list = response.json().get("data", [])
+
+                    # Fetch each instructor and check employee field
+                    for inst_item in instructor_list:
+                        inst_name = inst_item.get("name")
+                        inst_response = await client.get(
+                            f"{self.api_base}/Instructor/{inst_name}",
                             headers=self.headers_data
                         )
-                        if detail_response.status_code == 200:
-                            return detail_response.json().get("data", {})
+
+                        if inst_response.status_code == 200:
+                            instructor = inst_response.json().get("data", {})
+                            if instructor.get("employee") == employee_id:
+                                return instructor
+
                 return None
 
             except Exception as e:
-                logger.error(f"Error fetching instructor {email}: {str(e)}")
+                logger.error(f"Error fetching instructor for employee {employee_id}: {str(e)}")
                 return None
 
     async def get_teacher_classes(self, instructor_name: str) -> List[Dict]:
         """
         Fetch classes assigned to an instructor
         Returns list of student groups where instructor is assigned
+
+        Note: Filtering on child tables doesn't work via REST API,
+        so we fetch all Student Groups and check each one's instructors
         """
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
+                # First, get list of all Student Groups
                 response = await client.get(
                     f"{self.api_base}/Student Group",
                     headers=self.headers_data,
-                    params={"filters": f'[["instructors","like","%{instructor_name}%"]]'}
+                    params={"limit_page_length": 999}
                 )
 
-                if response.status_code == 200:
-                    return response.json().get("data", [])
-                return []
+                if response.status_code != 200:
+                    logger.error(f"Failed to fetch Student Groups: {response.status_code}")
+                    return []
+
+                groups_list = response.json().get("data", [])
+                matching_groups = []
+
+                # Iterate through each group and fetch full details
+                for group_item in groups_list:
+                    group_name = group_item.get("name")
+
+                    # Fetch full Student Group details (includes instructors child table)
+                    group_response = await client.get(
+                        f"{self.api_base}/Student Group/{group_name}",
+                        headers=self.headers_data
+                    )
+
+                    if group_response.status_code == 200:
+                        group_details = group_response.json().get("data", {})
+
+                        # Check if instructor is in the instructors child table
+                        instructors = group_details.get("instructors", [])
+                        for instructor_entry in instructors:
+                            if instructor_entry.get("instructor") == instructor_name:
+                                matching_groups.append(group_details)
+                                break
+
+                return matching_groups
 
             except Exception as e:
                 logger.error(f"Error fetching classes for {instructor_name}: {str(e)}")
@@ -197,15 +243,32 @@ class ERPNextClient:
         """Fetch course schedules for a student group to get subjects taught"""
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
+                # First get list of matching schedules
                 response = await client.get(
                     f"{self.api_base}/Course Schedule",
                     headers=self.headers_data,
                     params={"filters": f'[["student_group","=","{student_group}"]]'}
                 )
 
-                if response.status_code == 200:
-                    return response.json().get("data", [])
-                return []
+                if response.status_code != 200:
+                    logger.error(f"Failed to fetch Course Schedules: {response.status_code}")
+                    return []
+
+                schedule_list = response.json().get("data", [])
+                detailed_schedules = []
+
+                # Fetch full details for each schedule
+                for schedule_item in schedule_list:
+                    schedule_name = schedule_item.get("name")
+                    detail_response = await client.get(
+                        f"{self.api_base}/Course Schedule/{schedule_name}",
+                        headers=self.headers_data
+                    )
+
+                    if detail_response.status_code == 200:
+                        detailed_schedules.append(detail_response.json().get("data", {}))
+
+                return detailed_schedules
 
             except Exception as e:
                 logger.error(f"Error fetching course schedule for {student_group}: {str(e)}")
@@ -254,17 +317,214 @@ class ERPNextClient:
 
         return student_details
 
+    async def get_student_by_email(self, email: str) -> Optional[Dict]:
+        """
+        Get student details by email address
+
+        Args:
+            email: Student email address
+
+        Returns:
+            Dict with student data or None if not found
+        """
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                # Search for student by email
+                response = await client.get(
+                    f"{self.api_base}/Student",
+                    headers=self.headers_data,
+                    params={
+                        "filters": f'[["student_email_id","=","{email}"]]',
+                        "fields": '["name","student_name","first_name","last_name","student_email_id","gender","date_of_birth","student_mobile_number"]'
+                    }
+                )
+
+                if response.status_code != 200:
+                    logger.error(f"Failed to search student by email: {response.status_code}")
+                    return None
+
+                data = response.json().get("data", [])
+                if not data:
+                    logger.warning(f"Student not found with email: {email}")
+                    return None
+
+                student_id = data[0].get("name")
+
+                # Fetch full student details
+                detail_response = await client.get(
+                    f"{self.api_base}/Student/{student_id}",
+                    headers=self.headers_data
+                )
+
+                if detail_response.status_code == 200:
+                    return detail_response.json().get("data", {})
+
+                return None
+
+            except Exception as e:
+                logger.error(f"Error fetching student by email {email}: {str(e)}")
+                return None
+
+    async def get_student_groups_for_student(self, student_id: str) -> List[Dict]:
+        """
+        Get all student groups (classes/sections) a student belongs to
+
+        Args:
+            student_id: ERPNext Student ID (e.g., EDU-STU-2024-00001)
+
+        Returns:
+            List of student groups with enrollment details
+        """
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                # Fetch all Student Groups
+                response = await client.get(
+                    f"{self.api_base}/Student Group",
+                    headers=self.headers_data,
+                    params={"limit_page_length": 999}
+                )
+
+                if response.status_code != 200:
+                    logger.error(f"Failed to fetch Student Groups: {response.status_code}")
+                    return []
+
+                groups_list = response.json().get("data", [])
+                student_groups = []
+
+                # Iterate through each group and check if student is enrolled
+                for group_item in groups_list:
+                    group_name = group_item.get("name")
+
+                    # Fetch full Student Group details (includes students child table)
+                    group_response = await client.get(
+                        f"{self.api_base}/Student Group/{group_name}",
+                        headers=self.headers_data
+                    )
+
+                    if group_response.status_code == 200:
+                        group_details = group_response.json().get("data", {})
+
+                        # Check if student is in the students child table
+                        students = group_details.get("students", [])
+                        for student_entry in students:
+                            if student_entry.get("student") == student_id and student_entry.get("active"):
+                                student_groups.append({
+                                    "group_name": group_details.get("name"),
+                                    "program": group_details.get("program"),
+                                    "batch": group_details.get("batch"),
+                                    "academic_year": group_details.get("academic_year"),
+                                    "roll_number": student_entry.get("group_roll_number")
+                                })
+                                break
+
+                return student_groups
+
+            except Exception as e:
+                logger.error(f"Error fetching student groups for {student_id}: {str(e)}")
+                return []
+
+    async def get_program_enrollment(self, student_id: str) -> Optional[Dict]:
+        """
+        Get student's program enrollment details
+
+        Args:
+            student_id: ERPNext Student ID
+
+        Returns:
+            Dict with enrollment details or None
+        """
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                response = await client.get(
+                    f"{self.api_base}/Program Enrollment",
+                    headers=self.headers_data,
+                    params={
+                        "filters": f'[["student","=","{student_id}"],["docstatus","=",1]]',
+                        "fields": '["name","program","academic_year","enrollment_date"]'
+                    }
+                )
+
+                if response.status_code == 200:
+                    data = response.json().get("data", [])
+                    if data:
+                        return data[0]
+
+                return None
+
+            except Exception as e:
+                logger.error(f"Error fetching program enrollment for {student_id}: {str(e)}")
+                return None
+
+    async def get_program(self, program_name: str) -> Optional[Dict]:
+        """Fetch Program details (includes department for board info)"""
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                from urllib.parse import quote
+                response = await client.get(
+                    f"{self.api_base}/Program/{quote(program_name)}",
+                    headers=self.headers_data
+                )
+
+                if response.status_code == 200:
+                    return response.json().get("data", {})
+                return None
+
+            except Exception as e:
+                logger.error(f"Error fetching program {program_name}: {str(e)}")
+                return None
+
+    async def get_department(self, department_name: str) -> Optional[Dict]:
+        """Fetch Department details (contains board name)"""
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                from urllib.parse import quote
+                response = await client.get(
+                    f"{self.api_base}/Department/{quote(department_name)}",
+                    headers=self.headers_data
+                )
+
+                if response.status_code == 200:
+                    return response.json().get("data", {})
+                return None
+
+            except Exception as e:
+                logger.error(f"Error fetching department {department_name}: {str(e)}")
+                return None
+
+    async def get_board_for_program(self, program_name: str) -> str:
+        """
+        Get board name from program
+        Flow: Program → Department → department_name (Board)
+        """
+        program = await self.get_program(program_name)
+        if not program:
+            return "Not specified"
+
+        department_name = program.get("department")
+        if not department_name:
+            return "Not specified"
+
+        department = await self.get_department(department_name)
+        if not department:
+            return "Not specified"
+
+        # Extract board name (e.g., "State - SRS" → "State")
+        board = department.get("department_name", "Not specified")
+        return board
+
     async def sync_teacher_complete(self, email: str) -> Dict[str, Any]:
         """
         Complete teacher sync - fetch all related data
 
         Returns:
             {
+                "success": bool,
                 "user": {...},
                 "employee": {...},
                 "instructor": {...},
                 "classes": [...],
-                "subjects": [...]
+                "subjects": [...],
+                "board": "..."
             }
         """
         result = {
@@ -273,7 +533,8 @@ class ERPNextClient:
             "employee": None,
             "instructor": None,
             "classes": [],
-            "subjects": set()
+            "subjects": set(),
+            "board": "Not specified"
         }
 
         # Fetch user
@@ -286,27 +547,43 @@ class ERPNextClient:
 
         # Fetch employee
         employee = await self.get_employee_by_user_id(email)
+        if not employee:
+            result["error"] = "Employee not found in ERPNext"
+            return result
+
         result["employee"] = employee
 
-        # Fetch instructor
-        instructor = await self.get_instructor_by_email(email)
+        # Fetch instructor using employee ID
+        employee_id = employee.get("name")
+        instructor = await self.get_instructor_by_employee_id(employee_id)
+        if not instructor:
+            result["error"] = "Instructor profile not found"
+            return result
+
         result["instructor"] = instructor
 
-        if instructor:
-            instructor_name = instructor.get("name")
+        instructor_name = instructor.get("name")
 
-            # Fetch classes
-            classes = await self.get_teacher_classes(instructor_name)
-            result["classes"] = classes
+        # Fetch classes (Student Groups)
+        classes = await self.get_teacher_classes(instructor_name)
+        result["classes"] = classes
 
-            # Fetch subjects from course schedules
-            for class_group in classes:
-                group_name = class_group.get("name")
-                schedules = await self.get_course_schedule_by_student_group(group_name)
-                for schedule in schedules:
-                    course = schedule.get("course")
-                    if course:
-                        result["subjects"].add(course)
+        # Get board from first class's program
+        if classes:
+            first_class = classes[0]
+            program_name = first_class.get("program")
+            if program_name:
+                board = await self.get_board_for_program(program_name)
+                result["board"] = board
+
+        # Fetch subjects from course schedules
+        for class_group in classes:
+            group_name = class_group.get("name")
+            schedules = await self.get_course_schedule_by_student_group(group_name)
+            for schedule in schedules:
+                course = schedule.get("course")
+                if course:
+                    result["subjects"].add(course)
 
         result["subjects"] = list(result["subjects"])
         result["success"] = True

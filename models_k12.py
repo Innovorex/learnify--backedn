@@ -28,6 +28,7 @@ class K12Assessment(Base):
     subject = Column(String(100), nullable=False)
     chapter = Column(String(200), nullable=False)
     language = Column(String(20), nullable=False, default="English")  # "English" or "Hindi"
+    board = Column(String(50), nullable=True, default="CBSE")  # CBSE, TELANGANA, ICSE, etc.
 
     # Timing
     start_time = Column(DateTime, nullable=False)
